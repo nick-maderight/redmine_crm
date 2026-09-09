@@ -1,0 +1,11 @@
+en:
+  label_crm: CRM
+  label_crm_account_plural: CRM accounts
+  label_crm_contact_plural: CRM contacts
+  label_crm_deal_plural: CRM deals
+  label_crm_accounts: CRM accounts
+  label_crm_contacts: CRM contacts
+  label_crm_deals: CRM deals
+  label_crm_activities: CRM activities
+  permission_view_crm_linked: View linked CRM account
+  project_module_crm: CRM
