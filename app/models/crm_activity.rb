@@ -77,14 +77,16 @@ class CrmActivity < ActiveRecord::Base
     # Contractors receive only shared activities attached to one of their
     # visible accounts, through any of the three supported associations.
     def visible(user, include_archived: false)
-      scope = include_archived ? unscoped : unscoped.where(:archived_on => nil)
+      # `all` keeps an association's own conditions (record.activities.visible(user));
+      # `unscoped` would silently widen the timeline to every activity.
+      scope = include_archived ? all.unscope(:where => :archived_on) : all.where(:archived_on => nil)
       capability = Crm::Access.capability(user)
 
       case capability
       when :admin, :staff, :viewer
         scope
       when :contractor
-        scope = unscoped.where(:archived_on => nil)
+        scope = all.where(:archived_on => nil)
         account_ids = CrmAccount.visible(user).pluck(:id)
         return scope.none if account_ids.empty?
 
