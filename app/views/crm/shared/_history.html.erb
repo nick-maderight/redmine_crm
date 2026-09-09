@@ -1,0 +1,34 @@
+<% rows = local_assigns.fetch(:rows, @history_rows).to_a %>
+<% if rows.any? %>
+  <table class="list crm-history">
+    <thead>
+      <tr>
+        <th><%= l(:field_crm_changed_at) %></th>
+        <th><%= l(:field_crm_changed_by) %></th>
+        <th><%= l(:field_crm_property) %></th>
+        <th><%= l(:field_crm_old_value) %></th>
+        <th><%= l(:field_crm_new_value) %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.each do |row| %>
+        <% value_for = lambda { |key| row.respond_to?(:key?) && row.key?(key) ? row[key] : row[key.to_s] } %>
+        <% redacted = value_for.call(:redacted) %>
+        <% changed_at = value_for.call(:at) || value_for.call(:created_on) %>
+        <% actor = value_for.call(:user).presence || crm_owner_name(value_for.call(:user_id)) %>
+        <% property = value_for.call(:name).presence || crm_history_property_name(value_for.call(:prop_key)) %>
+        <% old_value = redacted ? l(:text_crm_redacted_value) : value_for.call(:old_value) %>
+        <% new_value = redacted ? l(:text_crm_redacted_value) : value_for.call(:value) %>
+        <tr>
+          <td><%= format_time(changed_at) if changed_at %></td>
+          <td><%= h(actor) %></td>
+          <td><%= h(property) %></td>
+          <td><%= h(old_value) %></td>
+          <td><%= h(new_value) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="nodata"><%= l(:text_crm_no_history) %></p>
+<% end %>

@@ -5,7 +5,13 @@ module Crm
     extend ActiveSupport::Concern
 
     included do
-      after_save :write_crm_audit_changes
+      attr_accessor :crm_audit_context, :crm_audit_source_ref
+      after_create :write_crm_creation_audit
+      after_update :write_crm_attribute_audit_changes
+      # acts_as_customizable saves its custom values in an after_save callback.
+      # Keep this callback after that macro's callback so update diffs can see
+      # each custom value's saved_changes.
+      after_save :write_crm_custom_value_audit_changes
     end
 
     class_methods do
@@ -44,7 +50,20 @@ module Crm
 
     private
 
-    def write_crm_audit_changes
+    def write_crm_creation_audit
+      return unless defined?(CrmChange)
+      return unless persisted?
+
+      actor = instance_variable_get(:@crm_audit_user) || User.current
+      if crm_audit_context.to_s == 'imported'
+        crm_change!('imported', nil, crm_audit_source_ref || crm_audit_external_reference, actor)
+      else
+        crm_change!('created', nil, crm_audit_display_name, actor)
+      end
+      true
+    end
+
+    def write_crm_attribute_audit_changes
       return unless defined?(CrmChange)
       return unless persisted?
 
@@ -58,20 +77,41 @@ module Crm
         prop_key = 'stage' if attribute.to_s == 'stage_id'
         crm_change!(prop_key, pair[0], pair[1], actor)
       end
+      true
+    end
 
-      # acts_as_customizable persists custom values from its own after_save
-      # callback. This callback is declared after that macro in each record
-      # model, so saved_changes on each value is available here.
-      if respond_to?(:custom_values)
-        custom_values.each do |custom_value|
-          next unless custom_value.respond_to?(:saved_changes)
-          next unless custom_value.saved_changes.key?('value')
+    def write_crm_custom_value_audit_changes
+      return unless defined?(CrmChange)
+      return unless persisted?
+      # Creation is represented by exactly one row from after_create.  The
+      # acts_as_customizable callback runs on after_save as well, so do not
+      # turn initial custom values into update rows.
+      return if saved_change_to_id?
+      return unless respond_to?(:custom_values)
 
-          old_value, value = custom_value.saved_changes['value']
-          crm_change!("cf_#{custom_value.custom_field_id}", old_value, value, actor)
-        end
+      actor = instance_variable_get(:@crm_audit_user) || User.current
+      custom_values.each do |custom_value|
+        next unless custom_value.respond_to?(:saved_changes)
+        next unless custom_value.saved_changes.key?('value')
+
+        old_value, value = custom_value.saved_changes['value']
+        crm_change!("cf_#{custom_value.custom_field_id}", old_value, value, actor)
       end
       true
+    end
+
+    def crm_audit_display_name
+      return name if respond_to?(:name)
+      return subject if respond_to?(:subject)
+
+      id
+    end
+
+    def crm_audit_external_reference
+      return external_ref if respond_to?(:external_ref)
+      return external_id if respond_to?(:external_id)
+
+      nil
     end
 
     def crm_audit_value(value)

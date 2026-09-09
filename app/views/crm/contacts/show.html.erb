@@ -49,7 +49,16 @@
           <% item = entry[:item]; kind = entry[:kind].to_s; at = entry[:at] || (item.respond_to?(:created_on) ? item.created_on : nil) %>
           <li class="crm-timeline-item crm-timeline-<%= kind %>"><time datetime="<%= at&.iso8601 %>"><%= format_time(at) if at %></time>
             <% if kind == 'activity' %><strong><%= l("label_crm_activity_#{item.kind}") rescue h(item.kind) %></strong><% if item.author_id.present? %><span class="actor"><%= h(crm_owner_name(item.author_id)) %></span><% end %><% if item.subject.present? %><h4><%= h(item.subject) %></h4><% end %><div class="wiki"><%= simple_format h(item.body.to_s) %></div>
-            <% else %><strong><%= l(:label_crm_change) %></strong><span><%= h(item.prop_key.to_s) %></span><% if item.respond_to?(:user_id) && item.user_id.present? %><span class="actor"><%= h(crm_owner_name(item.user_id)) %></span><% end %><% if item.value.present? %><div><%= h(item.value) %></div><% end %><% end %>
+            <% else %>
+              <% old_value = item.respond_to?(:old_value) ? item.old_value : nil %>
+              <% new_value = item.respond_to?(:value) ? item.value : nil %>
+              <strong><%= l(:label_crm_change) %></strong>
+              <span class="property"><%= h(crm_history_property_name(item.prop_key)) %></span>
+              <span class="actor"><%= h(crm_owner_name(item.respond_to?(:user_id) ? item.user_id : nil)) %></span>
+              <% if old_value.present? || new_value.present? %>
+                <span class="values"><%= h(old_value.to_s) %> → <%= h(new_value.to_s) %></span>
+              <% end %>
+            <% end %>
           </li>
         <% end %>
       </ol>
@@ -73,6 +82,9 @@
   <section id="crm-projects" class="crm-tab-panel"><h3><%= l(:label_crm_projects) %></h3><% projects = @contact.account ? @contact.account.projects.to_a : [] %><% if projects.any? %><ul><% projects.each { |project| %><li><%= link_to h(project.name), project_path(project) %></li><% } %></ul><% else %><p class="nodata"><%= l(:text_crm_no_linked_projects) %></p><% end %></section>
   <% if [:admin, :staff, :viewer].include?(crm_capability) %>
     <section id="crm-files" class="crm-tab-panel"><h3><%= l(:label_crm_files) %></h3><% if @attachments.to_a.any? %><%= link_to_attachments @contact, :thumbnails => true %><% else %><p class="nodata"><%= l(:text_crm_no_attachments) %></p><% end %><% if [:admin, :staff].include?(crm_capability) %><%= render :partial => 'attachments/form', :locals => {:container => @contact} %><% end %></section>
-    <section id="crm-history" class="crm-tab-panel"><h3><%= l(:label_crm_history) %></h3><% if @history_rows.to_a.any? %><table class="list crm-history"><thead><tr><th><%= l(:field_crm_changed_at) %></th><th><%= l(:field_crm_changed_by) %></th><th><%= l(:field_crm_property) %></th><th><%= l(:field_crm_old_value) %></th><th><%= l(:field_crm_new_value) %></th></tr></thead><tbody><% @history_rows.to_a.each do |row| %><% redacted = row[:redacted] || row['redacted'] %><tr><td><%= format_time(row[:at] || row['at']) %></td><td><%= h(row[:user] || row['user']) %></td><td><%= h(row[:prop_key] || row['prop_key']) %></td><td><%= redacted ? l(:text_crm_redacted_value) : h(row[:old_value] || row['old_value']) %></td><td><%= redacted ? l(:text_crm_redacted_value) : h(row[:value] || row['value']) %></td></tr><% end %></tbody></table><% else %><p class="nodata"><%= l(:text_crm_no_history) %></p><% end %></section>
+    <section id="crm-history" class="crm-tab-panel">
+      <h3><%= l(:label_crm_history) %></h3>
+      <%= render :partial => 'crm/shared/history', :locals => {:rows => @history_rows} %>
+    </section>
   <% end %>
 </div>

@@ -26,7 +26,7 @@
       </div>
       <% if crm_money? && stage_totals.present? %>
         <footer class="crm-board-footer">
-          <% stage_totals.each do |currency, cents| %><span><%= h(currency) %>: <%= crm_money(cents, currency) %></span><% end %>
+          <% stage_totals.each do |currency, cents| %><span><%= crm_money(cents, currency) %></span><% end %>
         </footer>
       <% end %>
     </section>

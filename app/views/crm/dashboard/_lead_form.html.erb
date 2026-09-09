@@ -1,34 +1,79 @@
-<% lead_values = @lead.respond_to?(:to_h) ? @lead.to_h : {} %>
+<% raw_values = @lead_values || {} %>
+<% raw_values = raw_values.to_unsafe_h if raw_values.respond_to?(:to_unsafe_h) %>
+<% lead_values = raw_values.respond_to?(:to_h) ? raw_values.to_h : {} %>
 <% lead_value = lambda { |key| lead_values[key] || lead_values[key.to_s] } %>
+<% lead_result = @lead_result %>
+<% lead_warning = if lead_result && lead_result.respond_to?(:warning?)
+                    lead_result.warning?
+                  elsif lead_result && lead_result.respond_to?(:warning)
+                    lead_result.warning
+                  end %>
+<% lead_result_record = lead_result.record if lead_result && lead_result.respond_to?(:record) %>
+<% existing_contact = @lead_existing_contact || (lead_result.existing_contact if lead_result && lead_result.respond_to?(:existing_contact)) %>
+<% if existing_contact.nil? && lead_warning && lead_result_record && lead_result_record.respond_to?(:email) && lead_result_record.respond_to?(:first_name) %>
+  <% existing_contact = lead_result_record %>
+<% end %>
+<% lead_errors = @lead_errors %>
+<% lead_errors = lead_result.errors if lead_errors.nil? && lead_result && lead_result.respond_to?(:errors) %>
+<% lead_error_messages = if lead_errors.respond_to?(:full_messages)
+                           lead_errors.full_messages
+                         elsif lead_errors.respond_to?(:to_ary)
+                           lead_errors.to_ary
+                         elsif lead_errors.present?
+                           [lead_errors.to_s]
+                         else
+                           []
+                         end %>
+<% collision_warning = lead_warning && existing_contact %>
 <%= form_tag crm_leads_path, :method => :post, :id => 'crm-lead-form', :class => 'tabular' do %>
   <p>
     <%= label_tag 'lead_contact_first_name', l(:field_crm_first_name) %>
-    <%= text_field_tag 'lead[contact_first_name]', @lead.respond_to?(:contact_first_name) ? @lead.contact_first_name : lead_value.call(:contact_first_name), :id => 'lead_contact_first_name', :required => false %>
+    <%= text_field_tag 'lead[first_name]', lead_value.call(:first_name) || lead_value.call(:contact_first_name), :id => 'lead_contact_first_name', :required => false %>
   </p>
   <p>
     <%= label_tag 'lead_contact_last_name', l(:field_crm_last_name) %>
-    <%= text_field_tag 'lead[contact_last_name]', @lead.respond_to?(:contact_last_name) ? @lead.contact_last_name : lead_value.call(:contact_last_name), :id => 'lead_contact_last_name' %>
+    <%= text_field_tag 'lead[last_name]', lead_value.call(:last_name) || lead_value.call(:contact_last_name), :id => 'lead_contact_last_name' %>
   </p>
   <p>
     <%= label_tag 'lead_email', l(:field_crm_email) %>
-    <%= email_field_tag 'lead[email]', @lead.respond_to?(:email) ? @lead.email : lead_value.call(:email), :id => 'lead_email' %>
+    <%= email_field_tag 'lead[email]', lead_value.call(:email), :id => 'lead_email' %>
   </p>
   <p>
     <%= label_tag 'lead_account_name', l(:field_crm_account) %>
-    <%= text_field_tag 'lead[account_name]', @lead.respond_to?(:account_name) ? @lead.account_name : lead_value.call(:account_name), :id => 'lead_account_name' %>
+    <%= text_field_tag 'lead[account_name]', lead_value.call(:account_name), :id => 'lead_account_name' %>
   </p>
   <p>
     <%= label_tag 'lead_deal_name', l(:field_crm_deal_name) %>
-    <%= text_field_tag 'lead[deal_name]', @lead.respond_to?(:deal_name) ? @lead.deal_name : lead_value.call(:deal_name), :id => 'lead_deal_name', :required => true %>
+    <%= text_field_tag 'lead[deal_name]', lead_value.call(:deal_name), :id => 'lead_deal_name', :required => true %>
   </p>
   <p>
     <%= label_tag 'lead_note', l(:field_crm_first_note) %>
-    <%= text_area_tag 'lead[note]', @lead.respond_to?(:note) ? @lead.note : lead_value.call(:note), :id => 'lead_note', :rows => 4 %>
+    <%= text_area_tag 'lead[note]', lead_value.call(:note) || lead_value.call(:first_note), :id => 'lead_note', :rows => 4 %>
   </p>
-  <% if @lead.respond_to?(:errors) && @lead.errors.any? %>
-    <%= error_messages_for :lead %>
+  <% if lead_error_messages.any? %>
+    <div id="errorExplanation" class="errorExplanation">
+      <h2><%= l(:label_crm_lead_errors, :default => 'Please correct the errors below.') %></h2>
+      <ul>
+        <% lead_error_messages.each do |message| %><li><%= h(message) %></li><% end %>
+      </ul>
+    </div>
   <% end %>
-  <p class="buttons">
-    <%= submit_tag l(:button_crm_create_lead), :name => nil %>
-  </p>
+  <% if collision_warning %>
+    <div class="warning crm-lead-collision">
+      <p>
+        <%= l(:text_crm_email_collision, :default => 'A contact with this email already exists:') %>
+        <%= crm_record_link(existing_contact) %>
+        <% if existing_contact.respond_to?(:account) && existing_contact.account %>
+          (<%= crm_record_link(existing_contact.account) %>)
+        <% end %>
+      </p>
+      <%= hidden_field_tag 'lead[existing_contact_id]', existing_contact.id %>
+      <p class="buttons">
+        <%= submit_tag l(:button_crm_use_existing, :default => 'Use existing contact'), :name => 'lead[email_collision_action]', :value => 'use_existing' %>
+        <%= submit_tag l(:button_crm_create_without_email, :default => 'Create without email'), :name => 'lead[email_collision_action]', :value => 'create_without_email' %>
+      </p>
+    </div>
+  <% else %>
+    <p class="buttons"><%= submit_tag l(:button_crm_create_lead), :name => nil %></p>
+  <% end %>
 <% end %>

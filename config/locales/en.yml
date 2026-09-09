@@ -200,3 +200,50 @@ en:
   text_crm_confirm_unlink_project: Unlink this project?
   permission_view_crm_linked: View linked CRM account
   project_module_crm: CRM
+  # Query columns and filters not covered by the record forms above.
+  field_crm_id: ID
+  field_crm_archived: Archived
+  field_crm_archived_on: Archived on
+  field_crm_external_ref: External reference
+  field_crm_external_source: External source
+  field_crm_external_id: External ID
+  field_crm_created_on: Created on
+  field_crm_updated_on: Updated on
+  field_crm_closed_on: Closed on
+  field_crm_linkedin_url: LinkedIn URL
+  field_crm_x_url: X URL
+  field_crm_duration_minutes: Duration (minutes)
+  field_crm_body: Body
+  field_crm_weighted_amount: Weighted amount
+  label_crm_no_activities: No activities
+  label_crm_no_attachments: No attachments
+  label_crm_no_contacts: No contacts
+  label_crm_no_deals: No deals
+  label_crm_no_deals_in_stage: No deals in this stage
+  label_crm_no_history: No history
+  label_crm_no_linked_issues: No linked issues
+  label_crm_no_linked_projects: No linked projects
+  label_crm_no_matching_deals: No matching deals
+  label_crm_no_open_deals: No open deals
+  label_crm_no_recent_activities: No recent activities
+  label_crm_no_timeline_entries: No timeline entries
+  text_crm_redacted_value: Redacted
+
+  # Standard Redmine keys referenced by the CRM query and form views.
+  field_visible: Visible
+  general_text_yes: Yes
+  general_text_no: No
+  label_deleted_user: Deleted user
+  label_me: Me
+  label_query: Custom query
+  label_query_new: New query
+  label_visibility_private: Private
+  label_visibility_public: Public
+  notice_successful_create: Created successfully.
+  notice_successful_update: Updated successfully.
+
+  activerecord:
+    errors:
+      messages:
+        merged_parent: cannot be modified because its parent record was merged
+        archived_parent: cannot be modified because its parent record is archived

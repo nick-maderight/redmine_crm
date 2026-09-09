@@ -347,6 +347,7 @@ module RedmineCrm
         set_custom(account, 'LinkedIn', row_value(row, 'linkedinLinkPrimaryLinkUrl', 'linkedinLink'))
         set_custom(account, 'X', row_value(row, 'xLinkPrimaryLinkUrl', 'xLink'))
         assign(account, :external_ref, ref) if ref
+        mark_imported(account, ref)
         account.save!
         @receipt['created']['accounts'] += 1
         @source_id_to_record[:accounts][source_id] = account
@@ -399,6 +400,7 @@ module RedmineCrm
         set_custom(contact, 'Stakeholder role', row_value(row, 'stakeholderRole', 'stakeholder_role'))
         set_custom(contact, 'Return client', row_value(row, 'returnClient', 'return_client'))
         assign(contact, :external_ref, ref) if ref
+        mark_imported(contact, ref)
         contact.save!
         @receipt['created']['contacts'] += 1
         @source_id_to_record[:people][source_id] = contact
@@ -452,6 +454,7 @@ module RedmineCrm
         set_custom(deal, 'Service type', row_value(row, 'serviceType', 'service_type'))
         set_custom(deal, 'First contact', row_value(row, 'firstContact', 'first_contact'))
         assign(deal, :external_ref, ref) if ref
+        mark_imported(deal, ref)
         deal.save!
         @receipt['created']['deals'] += 1
         @source_id_to_record[:opportunities][source_id] = deal
@@ -497,6 +500,7 @@ module RedmineCrm
         activity = klass.new(attrs)
         assign(activity, :external_source, 'upwork')
         assign(activity, :external_id, external_id) unless external_id == ''
+        mark_imported(activity, external_id)
         activity.save!
         @receipt['created']['activities'] += 1
       rescue StandardError => e
@@ -559,6 +563,7 @@ module RedmineCrm
         next if account
 
         account = klass.new(:name => name, :status => 'active_client', :external_ref => ref)
+        mark_imported(account, ref)
         account.save!
         @receipt['created']['accounts'] += 1
       end
@@ -743,6 +748,14 @@ module RedmineCrm
       klass.where(:pipeline_id => @pipeline.id, :name => name).first ||
         klass.where(:pipeline_id => @pipeline.id, :name => 'New').first ||
         raise("Sales pipeline has no #{name} or New stage")
+    end
+
+    def mark_imported(record, source_ref)
+      return record unless record.respond_to?(:crm_audit_context=)
+
+      record.crm_audit_context = 'imported'
+      record.crm_audit_source_ref = source_ref if record.respond_to?(:crm_audit_source_ref=)
+      record
     end
 
     def set_custom(record, name, value)

@@ -63,6 +63,7 @@ module CrmHelper
 
     changes.each_with_object([]) do |change, rows|
       key = change.prop_key.to_s
+      field = nil
       if key.start_with?('cf_')
         field_id = key.delete_prefix('cf_').to_i
         field = CustomField.find_by(:id => field_id) if defined?(CustomField)
@@ -74,6 +75,7 @@ module CrmHelper
       rows << {
         :id => change.id,
         :prop_key => key,
+        :name => crm_history_property_name(key, field),
         :old_value => redacted ? nil : change.old_value,
         :value => redacted ? nil : change.value,
         :redacted => redacted,
@@ -83,6 +85,18 @@ module CrmHelper
       }
     end
   end
+
+  def crm_history_property_name(prop_key, field = nil)
+    key = prop_key.to_s
+    if key.start_with?('cf_')
+      field ||= CustomField.find_by(:id => key.delete_prefix('cf_').to_i) if defined?(CustomField)
+      return field.name.to_s if field && field.name.present?
+      return l(:label_crm_deleted_field, :default => 'deleted field')
+    end
+
+    l("field_crm_#{key}", :default => key.humanize)
+  end
+
 
   private
 
