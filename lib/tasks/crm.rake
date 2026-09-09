@@ -14,6 +14,8 @@ namespace :redmine do
       require File.expand_path('../redmine_crm/twenty_import', __dir__)
       directory = ENV['DIR'].presence || ENV['FILE'].presence
       raise ArgumentError, 'DIR=/path/to/twenty-csvs is required' if directory.to_s.empty?
+      # History rows name the actor. ACTOR=<login> overrides; default is the first admin.
+      User.current = ENV['ACTOR'].present? ? User.find_by!(:login => ENV['ACTOR']) : User.active.where(:admin => true).order(:id).first
 
       RedmineCrm::TwentyImport.call(
         :dir => directory,

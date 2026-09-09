@@ -1,6 +1,7 @@
 account = @account || @record
 api.account do
   api.id account.id
+  api.lock_version account.lock_version
   api.name account.name
   api.domain account.domain if account.domain.present?
   api.website account.website if account.website.present?

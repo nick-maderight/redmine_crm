@@ -2,6 +2,7 @@ api.array :deals, api_meta(:total_count => @record_count, :offset => @offset, :l
   @records.each do |deal|
     api.deal do
       api.id deal.id
+      api.lock_version deal.lock_version
       api.name deal.name
       api.description deal.description if deal.respond_to?(:description) && deal.description.present?
       api.account(:id => deal.account_id, :name => deal.account.name) if deal.account_id.present? && deal.account

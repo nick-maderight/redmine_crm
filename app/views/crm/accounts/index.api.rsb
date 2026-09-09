@@ -2,6 +2,7 @@ api.array :accounts, api_meta(:total_count => @record_count, :offset => @offset,
   @records.each do |account|
     api.account do
       api.id account.id
+      api.lock_version account.lock_version
       api.name account.name
       api.domain account.domain if account.domain.present?
       api.website account.website if account.website.present?

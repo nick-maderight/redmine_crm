@@ -24,11 +24,16 @@ class CrmAccountProject < ActiveRecord::Base
   private
 
   def write_link_change
-    write_account_change(nil, project_id)
+    write_account_change(nil, project_label)
   end
 
   def write_unlink_change
-    write_account_change(project_id, nil)
+    write_account_change(project_label, nil)
+  end
+
+  # History rows carry the project identifier, which stays readable after the link is gone.
+  def project_label
+    project ? "#{project.identifier} (#{project.id})" : project_id.to_s
   end
 
   def write_account_change(old_value, value)

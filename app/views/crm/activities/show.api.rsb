@@ -1,6 +1,7 @@
 activity = @activity || @record
 api.activity do
   api.id activity.id
+  api.lock_version activity.lock_version
   api.kind activity.kind
   api.channel activity.channel if activity.channel.present?
   api.direction activity.direction if activity.direction.present?

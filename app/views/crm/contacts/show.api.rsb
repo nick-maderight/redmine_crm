@@ -1,6 +1,7 @@
 contact = @contact || @record
 api.contact do
   api.id contact.id
+  api.lock_version contact.lock_version
   api.account(:id => contact.account_id, :name => contact.account.name) if contact.account_id.present? && contact.account
   api.first_name contact.first_name if contact.first_name.present?
   api.last_name contact.last_name if contact.last_name.present?
