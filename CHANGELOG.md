@@ -2,6 +2,16 @@
 
 All notable changes to `redmine_crm` are recorded here. Release tags are immutable; the supported Redmine range and migration state for each release are part of its deployment record.
 
+## v0.1.7 - 2026-09-09
+
+- Global search: CRM accounts, contacts, deals and activities render as Redmine search results (event
+  accessors; no project badge). Previously a 500 when a CRM type was selected. Regression test added.
+
+## v0.1.6 - 2026-09-09
+
+- Lists: Redmine's context-menu assets are loaded and the table sits inside the `data-cm-url` form, so
+  right-click / the `...` actions button open the menu and bulk actions carry the selected ids.
+
 ## v0.1.5 - 2026-09-09
 
 - Browser mutations follow Redmine's form contract: create/update/move/archive/restore and context-menu bulk
