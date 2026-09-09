@@ -2,6 +2,13 @@
 
 All notable changes to `redmine_crm` are recorded here. Release tags are immutable; the supported Redmine range and migration state for each release are part of its deployment record.
 
+## v0.1.5 - 2026-09-09
+
+- Browser mutations follow Redmine's form contract: create/update/move/archive/restore and context-menu bulk
+  actions redirect back with a flash ("2 deals updated", "Updated successfully."); stale `lock_version`
+  becomes a flash error instead of a raw 409; `ids[]`-only bulk submits are honoured (previously discarded
+  when no per-record hash was present). API and board-drag JSON responses unchanged. Integration tests added.
+
 ## v0.1.4 - 2026-09-09
 
 - UI rebuilt in Redmine's own idiom: CRM tab bar under the header; lists are Redmine query tables (filters,
