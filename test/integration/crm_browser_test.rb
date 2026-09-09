@@ -112,7 +112,9 @@ class CrmBrowserIntegrationTest < Redmine::IntegrationTest
       :deal => {:stage_id => 3, :lock_version => stale_version},
       :back_url => '/crm/deals/1'
     }
+    assert_redirect_to_path '/crm/deals/1'
     assert_select 'div.flash.error', :text => /updated by another user/i
+    assert_equal target_stage.id, CrmDeal.find(1).stage_id
   end
 
   def test_html_bulk_ids_owner_stage_archive_restore_redirect_and_summarize
