@@ -2,6 +2,20 @@
 
 All notable changes to `redmine_crm` are recorded here. Release tags are immutable; the supported Redmine range and migration state for each release are part of its deployment record.
 
+## v0.1.4 - 2026-09-09
+
+- UI rebuilt in Redmine's own idiom: CRM tab bar under the header; lists are Redmine query tables (filters,
+  options, group-by with per-group money totals, sort, context menu, bulk archive/restore/owner/stage, CSV);
+  record pages are issue-style (action menu, status badge, two-column attributes, custom fields, description,
+  related tables, attachments, journal timeline with composer and named old/new values, "Show all" history);
+  two-column dashboard (overdue / due today / stale / my open deals, new-lead form, pipeline totals, recent
+  activities); board fits the viewport with won/lost columns collapsed to a count and a list link; pipelines
+  under the admin layout. Tabulator removed. Money renders as `USD 57,500.00`; enums and statuses humanized.
+- Contractors never see deals anywhere: dashboard activity context, activity list column and filter, related
+  tables; regression tests added.
+- v0.1.2: API builders emit `lock_version`; link history names projects; imports run as an admin actor.
+- v0.1.3: Tabulator stylesheet loaded on CRM pages (superseded by the rebuild).
+
 ## v0.1.1 — 2026-09-09
 
 - Health receipt emits `counts` and `required_groups` keys correctly through the API builder.
