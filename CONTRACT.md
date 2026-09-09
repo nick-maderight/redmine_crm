@@ -77,7 +77,10 @@ classes make `visibility_by_project_condition` project-free.
 (feed → 403 on everything except feed actions; contractor → 403 on any API-format request and on deals/board;
 none → 404), `find_record` via `visible` scope (404), helper `crm_money?`, `accept_api_auth` per action as the
 design's route table, SafeAttributes precheck returning 422 with forbidden keys, `lock_version` handling
-(409 on `ActiveRecord::StaleObjectError`), duplicate external identity → 200 with existing record.
+(409 on `ActiveRecord::StaleObjectError` for API/XHR-JSON; browser forms redirect with a
+`notice_locking_conflict` flash). Exception: browser context-menu bulk actions (`ids[]` without per-record
+`lock_version`) act on the current row version, like Redmine's own bulk edit; API bulk keeps per-item
+versions and `conflict` results. Duplicate external identity → 200 with existing record.
 Controllers: `dashboard`, `accounts`, `contacts`, `deals` (incl. `board`, `move`, `lookup`), `activities`,
 `links`, `account_projects`, `merges`, `feed`, `health`, `pipelines`, `stages` (admin), each with
 `index/show/new/create/edit/update/archive/restore/bulk` where routed. Helper `CrmHelper`:
