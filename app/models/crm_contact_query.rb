@@ -10,12 +10,14 @@ class CrmContactQuery < Query
   self.available_columns = [
     QueryColumn.new(:id, :sortable => "#{CrmContact.table_name}.id", :default_order => 'desc',
                     :caption => :field_crm_id, :frozen => true),
+    CrmContactNameQueryColumn.new(:sortable => "#{CrmContact.table_name}.last_name, #{CrmContact.table_name}.first_name",
+                                 :caption => :field_crm_name),
     QueryColumn.new(:first_name, :sortable => "#{CrmContact.table_name}.first_name", :groupable => true,
                     :caption => :field_crm_first_name),
     QueryColumn.new(:last_name, :sortable => "#{CrmContact.table_name}.last_name", :default_order => 'asc',
                     :groupable => true, :caption => :field_crm_last_name),
-    QueryAssociationColumn.new(:account, :name, :sortable => "#{CrmAccount.table_name}.name",
-                               :groupable => true, :caption => :field_crm_account),
+    CrmAssociationQueryColumn.new(:account, :name, :sortable => "#{CrmAccount.table_name}.name",
+                                  :groupable => true, :caption => :field_crm_account),
     QueryColumn.new(:email, :sortable => "#{CrmContact.table_name}.email", :caption => :field_crm_email),
     QueryColumn.new(:phone, :sortable => "#{CrmContact.table_name}.phone", :caption => :field_crm_phone),
     QueryColumn.new(:job_title, :sortable => "#{CrmContact.table_name}.job_title", :caption => :field_crm_job_title),
@@ -72,7 +74,7 @@ class CrmContactQuery < Query
   end
 
   def default_columns_names
-    [:first_name, :last_name, :account, :email, :owner, :updated_on]
+    [:name, :account, :email, :owner, :updated_on]
   end
 
   def default_sort_criteria

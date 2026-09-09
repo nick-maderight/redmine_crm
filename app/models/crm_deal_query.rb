@@ -12,16 +12,17 @@ class CrmDealQuery < Query
                     :caption => :field_crm_id, :frozen => true),
     QueryColumn.new(:name, :sortable => "#{CrmDeal.table_name}.name", :groupable => true,
                     :caption => :field_crm_name),
-    QueryAssociationColumn.new(:account, :name, :sortable => "#{CrmAccount.table_name}.name",
-                               :groupable => true, :caption => :field_crm_account),
-    QueryAssociationColumn.new(:contact, :last_name, :sortable => "#{CrmContact.table_name}.last_name",
-                               :groupable => true, :caption => :field_crm_contact),
-    QueryAssociationColumn.new(:pipeline, :name, :sortable => "#{CrmPipeline.table_name}.name",
-                               :groupable => true, :caption => :field_crm_pipeline),
-    QueryAssociationColumn.new(:stage, :name, :sortable => "#{CrmPipelineStage.table_name}.position",
-                               :groupable => true, :caption => :field_crm_stage),
-    QueryAssociationColumn.new(:stage, :kind, :sortable => "#{CrmPipelineStage.table_name}.kind",
-                               :groupable => true, :caption => :field_crm_status),
+    CrmAssociationQueryColumn.new(:account, :name, :sortable => "#{CrmAccount.table_name}.name",
+                                  :groupable => true, :caption => :field_crm_account),
+    CrmAssociationQueryColumn.new(:contact, :last_name, :sortable => "#{CrmContact.table_name}.last_name",
+                                  :groupable => true, :caption => :field_crm_contact),
+    CrmAssociationQueryColumn.new(:pipeline, :name, :sortable => "#{CrmPipeline.table_name}.name",
+                                  :groupable => true, :caption => :field_crm_pipeline),
+    CrmAssociationQueryColumn.new(:stage, :name, :sortable => "#{CrmPipelineStage.table_name}.name",
+                                  :groupable => true, :caption => :field_crm_stage),
+    CrmAssociationQueryColumn.new(:stage, :kind, :column_name => :status,
+                                  :sortable => "#{CrmPipelineStage.table_name}.kind",
+                                  :groupable => true, :caption => :field_crm_status),
     QueryColumn.new(:probability, :sortable => "#{CrmDeal.table_name}.probability", :groupable => true,
                     :caption => :field_crm_probability),
     QueryColumn.new(:owner, :sortable => lambda { User.fields_for_order_statement }, :groupable => true,
@@ -104,7 +105,7 @@ class CrmDealQuery < Query
 
   def default_columns_names
     columns = [:name, :account, :stage, :owner, :next_action_on, :updated_on]
-    columns += [:amount_cents, :currency] if Crm::Access.can_view_money?(User.current)
+    columns << :amount_cents if Crm::Access.can_view_money?(User.current)
     columns
   end
 
@@ -117,8 +118,10 @@ class CrmDealQuery < Query
   end
 
   def default_sort_criteria
-    [['next_action_on', 'asc'], ['id', 'asc']]
+    [['updated_on', 'desc'], ['id', 'desc']]
   end
+
+
 
   def base_scope
     crm_base_scope.joins(:stage, :pipeline).left_joins(:account, :contact, :owner)

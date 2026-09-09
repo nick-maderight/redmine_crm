@@ -1,0 +1,61 @@
+<%#
+  Shared Tabulator grid. Locals:
+    records, query (may be nil for contractors), record_type ('account'|'contact'|'deal'|'activity'),
+    update_url (with ':id' placeholder), editable (Array of attribute names editable inline),
+    default_columns (Array of attribute names used when there is no query).
+  Rows carry the display value under the column name plus id/lock_version; editable columns are plain
+  attributes, so the value sent back is the attribute itself.
+%>
+<%
+  columns = if query && query.respond_to?(:columns)
+              query.columns
+            else
+              default_columns.map { |name| QueryColumn.new(name.to_sym, :caption => "field_crm_#{name}".to_sym) }
+            end
+  columns = columns.reject { |c| c.name.to_s == 'id' }
+  money_fields = %w[amount_cents currency weighted_amount weighted_cents]
+  columns = columns.reject { |c| money_fields.include?(c.name.to_s) } unless crm_money?
+  column_defs = columns.map do |column|
+    name = column.name.to_s
+    {:field => name, :title => column.caption.to_s, :editable => editable.include?(name), :kind => (column.respond_to?(:custom_field) && column.custom_field ? 'custom' : 'core')}
+  end
+  rows = records.to_a.map do |record|
+    row = {'id' => record.id, 'lock_version' => record.lock_version}
+    columns.each do |column|
+      name = column.name.to_s
+      raw = if column.respond_to?(:value_object) && query
+              column.value_object(record)
+            elsif record.respond_to?(name)
+              record.public_send(name)
+            end
+      row[name] = case name
+                  when 'amount_cents' then raw
+                  when 'owner', 'author' then (raw.respond_to?(:name) ? raw.name : (raw.nil? ? '' : crm_owner_name(raw)))
+                  else
+                    if raw.respond_to?(:name) && !raw.is_a?(String)
+                      raw.name
+                    elsif raw.is_a?(Time) || raw.is_a?(DateTime)
+                      format_time(raw)
+                    elsif raw.is_a?(Date)
+                      format_date(raw)
+                    elsif raw.is_a?(Array)
+                      raw.map { |v| v.respond_to?(:name) ? v.name : v.to_s }.join(', ')
+                    elsif raw == true then l(:general_text_Yes)
+                    elsif raw == false then l(:general_text_No)
+                    else raw.to_s
+                    end
+                  end
+      row[name] = crm_money(raw, record.try(:currency)) if name == 'amount_cents' && raw
+    end
+    row
+  end
+%>
+<div id="crm-<%= record_type.pluralize %>-grid" class="crm-grid"
+     data-crm-rows="<%= h(ERB::Util.json_escape(rows.to_json)) %>"
+     data-crm-update-url="<%= update_url %>"
+     data-crm-columns="<%= h(ERB::Util.json_escape(column_defs.to_json)) %>"
+     data-crm-show-url="<%= update_url %>"
+     data-crm-record-type="<%= record_type %>"
+     data-crm-layout="fitDataFill">
+  <noscript><p class="nodata"><%= l(:text_crm_enable_javascript_for_grid) %></p></noscript>
+</div>

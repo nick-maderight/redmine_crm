@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module CrmHelper
+  include CrmFieldsHelper
   def crm_money(cents, currency)
     return '' if cents.nil?
 
@@ -9,6 +10,32 @@ module CrmHelper
                        :format => '%u %n',
                        :precision => 2)
   end
+  # Render imported CRM enum values through the locale when one exists.  The
+  # optional namespace lets list cells prefer a more specific key while the
+  # one-argument form remains suitable for generic imported values such as
+  # FOLLOW_UP.
+  def crm_humanize_enum(value, namespace = nil)
+    text = value.to_s.strip
+    return '' if text.blank?
+
+    token = text.underscore
+    keys = []
+    keys << :"label_crm_#{namespace}_#{token}" if namespace.present?
+    keys.concat([
+      :"label_crm_#{token}",
+      :"label_crm_status_#{token}",
+      :"label_crm_activity_#{token}",
+      :"label_crm_channel_#{token}",
+      :"label_crm_direction_#{token}",
+      :"label_crm_visibility_#{token}",
+      :"label_crm_stage_kind_#{token}"
+    ])
+
+    key = keys.detect {|candidate| I18n.exists?(candidate, I18n.locale) }
+    key ? l(key) : text.humanize
+  end
+
+
 
   def crm_owner_name(user_id)
     user = user_id.present? ? User.find_by(:id => user_id) : nil
@@ -96,7 +123,162 @@ module CrmHelper
 
     l("field_crm_#{key}", :default => key.humanize)
   end
+  def crm_column_content(column, record)
+    column_name = column.name.to_s
+    value = column.value_object(record)
 
+    case column_name
+    when 'amount_cents'
+      value.nil? ? '' : crm_money(value, record.respond_to?(:currency) ? record.currency : nil)
+    when 'weighted_cents'
+      value.nil? ? '' : crm_money(value, record.respond_to?(:currency) ? record.currency : nil)
+    when 'currency'
+      value.to_s.upcase.presence || ''
+    when 'status'
+      namespace = record.is_a?(CrmAccount) ? :account_status : :stage_kind
+      crm_humanize_enum(value, namespace)
+    when 'kind'
+      record.is_a?(CrmActivity) ? crm_humanize_enum(value, :activity_kind) : crm_humanize_enum(value, :stage_kind)
+    when 'channel'
+      crm_humanize_enum(value, :activity_channel)
+    when 'direction'
+      crm_humanize_enum(value, :activity_direction)
+    when 'visibility'
+      crm_humanize_enum(value, :activity_visibility)
+    when 'next_action'
+      crm_humanize_enum(value)
+    when 'contact'
+      associated = record.respond_to?(:contact) ? record.contact : nil
+      associated ? crm_record_link(associated) : ''
+    else
+      if column_name == 'name' && value.present?
+        crm_record_link(record)
+      elsif column_name == 'subject' && value.present? && record.is_a?(CrmActivity)
+        link_to value, crm_activity_path(record)
+      else
+        column_content(column, record)
+      end
+    end
+  end
+
+  def crm_money_total(value)
+    return '' if value.nil?
+
+    if value.is_a?(Hash)
+      value.sort_by {|currency, _| currency.to_s }.map do |currency, cents|
+        crm_money(cents, currency)
+      end.join(', ')
+    else
+      crm_money(value, 'USD')
+    end
+  end
+
+  # Core's total_tag uses format_object, which intentionally renders a Hash as
+  # Ruby syntax. CRM money totals are grouped by currency, so render each
+  # currency independently instead.
+  def total_tag(column, value)
+    return super unless %w[amount_cents weighted_cents].include?(column.name.to_s)
+
+    label = content_tag('span', "#{column.caption}:")
+    value_tag = content_tag('span', crm_money_total(value), :class => 'value')
+    content_tag('span', label + ' ' + value_tag,
+                :class => "total-for-#{column.name.to_s.dasherize}")
+  end
+
+
+ 
+
+
+  def crm_grouped_list(records, query)
+    rows = Array(records)
+    group_column = query.group_by_column if query && query.respond_to?(:group_by_column) && query.grouped?
+    if group_column.nil? && query && params[:group_by].present? && query.respond_to?(:available_columns)
+      requested_group = params[:group_by].to_s
+      group_column = query.available_columns.find do |column|
+        column.name.to_s == requested_group &&
+          (!column.respond_to?(:groupable?) || column.groupable?)
+      end
+    end
+
+    unless group_column
+      rows.each {|record| yield record, 0, nil, nil, nil }
+      return
+    end
+
+    rows = rows.sort_by do |record|
+      value = group_column.group_value(record)
+      [value.nil? ? 1 : 0, value.to_s]
+    end
+    counts = begin
+      query.result_count_by_group || {}
+    rescue StandardError
+      {}
+    end
+    totals = begin
+      query.totalable_columns.index_with do |column|
+        query.total_by_group_for(column) || {}
+      end
+    rescue StandardError
+      {}
+    end
+    first = true
+    previous_group = nil
+
+    rows.each do |record|
+      group = group_column.group_value(record)
+      group_name = group_count = group_totals = nil
+      if first || group != previous_group
+        group_name = if group.blank? && group != false
+                       "(#{l(:label_blank_value)})"
+                     elsif %w[status kind channel direction visibility].include?(group_column.name.to_s)
+                       namespace = if group_column.name.to_s == 'status'
+                                     record.is_a?(CrmAccount) ? :account_status : :stage_kind
+                                   else
+                                     "activity_#{group_column.name}"
+                                   end
+                       crm_humanize_enum(group, namespace)
+                     elsif respond_to?(:format_object)
+                       format_object(group)
+                     else
+                       ERB::Util.html_escape(group.to_s)
+                     end
+        group_count = counts[group] if counts.respond_to?(:[])
+        group_totals = totals.map do |column, values|
+          total_tag(column, crm_group_total(values, group, group_column))
+        end.join(' ').html_safe
+
+      end
+      yield record, 0, group_name, group_count, group_totals
+      previous_group = group
+      first = false
+    end
+  end
+
+  def crm_group_total(values, group, group_column = nil)
+    return 0 unless values.respond_to?(:each)
+    if values.respond_to?(:key?) && values.key?(group)
+      return {group => values[group]} if group_column && group_column.name.to_s == 'currency'
+
+      return values[group]
+    end
+
+    grouped = {}
+    values.each do |key, amount|
+      key_group, currency = if key.is_a?(Array)
+                              [key.first, key.last]
+                            else
+                              [key, nil]
+                            end
+      next unless key_group == group
+
+      if currency.present?
+        grouped[currency] = grouped.fetch(currency, 0).to_i + amount.to_i
+      else
+        return amount
+      end
+    end
+    grouped.presence || 0
+  end
 
   private
 

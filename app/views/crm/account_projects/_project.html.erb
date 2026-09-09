@@ -1,14 +1,11 @@
-<%# frozen_string_literal: true %>
 <% account_project = local_assigns[:account_project] || local_assigns[:link] %>
 <% project = account_project && account_project.project %>
 <% if project %>
-  <li id="crm-account-project-<%= project.id %>">
-    <%= link_to project.name, project_path(project) %>
+  <tr id="crm-account-project-<%= project.id %>">
+    <td><%= link_to h(project.name), project_path(project) %></td>
+    <td><%= h(project.identifier) %></td>
     <% if Crm::Access.staff?(User.current) %>
-      <%= button_to l(:button_crm_unlink_project), crm_account_project_path(account_project.account, project),
-        :method => :delete,
-        :class => "button-link crm-link-remove",
-        :data => { :confirm => l(:text_crm_confirm_unlink_project) } %>
+      <td><%= button_to l(:button_crm_unlink_project), crm_account_project_path(account_project.account, project), :method => :delete, :class => 'icon icon-del', :data => {:confirm => l(:text_crm_confirm_unlink_project)} %></td>
     <% end %>
-  </li>
+  </tr>
 <% end %>

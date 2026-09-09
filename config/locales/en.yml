@@ -30,6 +30,7 @@ en:
   label_crm_properties: Properties
   label_crm_timeline: Timeline
   label_crm_history: History
+  label_crm_show_all_history: Show all %{count}
   label_crm_files: Files
   label_crm_issues: Issues
   label_crm_projects: Projects
@@ -81,6 +82,30 @@ en:
   label_crm_direction_outbound: Outbound
   label_crm_visibility_staff: Staff only
   label_crm_visibility_shared: Shared with linked contractors
+  label_crm_account_status_lead: Lead
+  label_crm_account_status_prospect: Prospect
+  label_crm_account_status_active_client: Active client
+  label_crm_account_status_past_client: Past client
+  label_crm_account_status_partner: Partner
+  label_crm_account_status_other: Other
+  label_crm_activity_kind_note: Note
+  label_crm_activity_kind_call: Call
+  label_crm_activity_kind_meeting: Meeting
+  label_crm_activity_kind_message: Message
+  label_crm_activity_kind_other: Other
+  label_crm_activity_channel_upwork: Upwork
+  label_crm_activity_channel_email: Email
+  label_crm_activity_channel_phone: Phone
+  label_crm_activity_channel_sms: SMS
+  label_crm_activity_channel_in_person: In person
+  label_crm_activity_channel_other: Other
+  label_crm_activity_direction_inbound: Inbound
+  label_crm_activity_direction_outbound: Outbound
+  label_crm_activity_visibility_staff: Staff only
+  label_crm_activity_visibility_shared: Shared with linked contractors
+  label_crm_stage_kind_open: Open
+  label_crm_stage_kind_won: Won
+  label_crm_stage_kind_lost: Lost
   field_crm_name: Name
   field_crm_domain: Domain
   field_crm_website: Website
@@ -139,6 +164,10 @@ en:
   button_crm_new_deal: New deal
   button_crm_new_activity: New activity
   button_crm_create_lead: Create lead
+  button_crm_use_existing: Use existing contact
+  button_crm_create_without_email: Create without email
+  label_crm_lead_errors: Please correct the errors below.
+  text_crm_email_collision: 'A contact with this email already exists:'
   button_crm_create_pipeline: Create pipeline
   button_crm_add_stage: Add stage
   button_crm_add_activity: Add activity
@@ -181,6 +210,10 @@ en:
   text_crm_no_deals: No deals found.
   text_crm_no_activities: No activities found.
   text_crm_no_deals_in_stage: No deals in this stage.
+  label_crm_board_closed_deals:
+    zero: No deals
+    one: 1 deal - open in list
+    other: "%{count} deals - open in list"
   text_crm_no_matching_deals: No matching deals.
   text_crm_no_open_deals: No open deals assigned to you.
   text_crm_no_recent_activities: No recent activities.
@@ -229,6 +262,7 @@ en:
   label_crm_no_timeline_entries: No timeline entries
   text_crm_redacted_value: Redacted
 
+  field_pipeline: Pipeline
   # Standard Redmine keys referenced by the CRM query and form views.
   field_visible: Visible
   general_text_yes: Yes

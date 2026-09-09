@@ -1,10 +1,38 @@
-<% html_title(@query && @query.persisted? ? @query.name : l(:label_crm_contacts)) %>
+<% title = @query && @query.persisted? ? @query.name : l(:label_crm_contacts) %>
+<% html_title title %>
 <div class="contextual">
-  <% if [:admin, :staff].include?(crm_capability) %><%= link_to l(:button_crm_new_contact), crm_new_contact_path, :class => 'icon icon-add' %><% end %>
+  <% if [:admin, :staff].include?(crm_capability.to_sym) %>
+    <%= link_to sprite_icon('add', l(:button_crm_new_contact)), crm_new_contact_path, :class => 'icon icon-add' %>
+  <% end %>
 </div>
-<h2><%= @query && @query.persisted? ? h(@query.name) : l(:label_crm_contacts) %></h2>
-<% if @query %><%= form_tag crm_contacts_path, :method => :get, :id => 'query_form' do %><%= render :partial => 'queries/query_form' %><% end %><% end %>
-<% if @record_count.to_i.zero? %><p class="nodata"><%= l(:text_crm_no_contacts) %></p><% end %>
-<%= render :partial => 'grid' %>
-<% content_for :sidebar do %><% if [:admin, :staff, :viewer].include?(crm_capability) && defined?(CrmContactQuery) %><%= render_sidebar_queries(CrmContactQuery, nil) %><% end %><% end %>
-<% content_for :header_tags do %><%= javascript_include_tag 'tabulator', 'sortable', 'crm', :plugin => 'redmine_crm' %><% end %>
+<%= render :partial => 'crm/shared/nav' %>
+<h2><%= h(title) %></h2>
+
+<% if @query %>
+  <%= form_tag crm_contacts_path, :method => :get, :id => 'query_form' do %>
+    <%= render :partial => 'queries/query_form' %>
+  <% end %>
+<% end %>
+
+<% if @record_count.to_i.zero? %>
+  <p class="nodata"><%= l(:text_crm_no_contacts) %></p>
+<% else %>
+  <%= render_query_totals(@query) if @query %>
+  <%= render :partial => 'crm/shared/list', :locals => {
+        :records => @records, :query => @query, :record_type => 'contact'
+      } %>
+  <% pages = Redmine::Pagination::Paginator.new(@record_count.to_i, @limit.to_i, params[:page]) %>
+  <span class="pagination"><%= pagination_links_full pages, nil %></span>
+<% end %>
+
+<% unless crm_capability.to_sym == :contractor || @query.nil? %>
+  <% other_formats_links do |f| %>
+    <%= f.link_to_with_query_parameters 'CSV' %>
+  <% end %>
+<% end %>
+
+<% content_for :sidebar do %>
+  <% if @query && [:admin, :staff, :viewer].include?(crm_capability.to_sym) %>
+    <%= render_sidebar_queries(CrmContactQuery, nil) %>
+  <% end %>
+<% end %>

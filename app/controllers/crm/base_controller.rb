@@ -6,6 +6,7 @@ module Crm
   # authorization callbacks: Crm::Access and each model's visible scope are the
   # authorization boundary.
   class BaseController < ApplicationController
+    menu_item :crm
     helper :queries
     include QueriesHelper
     helper :custom_fields
@@ -17,6 +18,11 @@ module Crm
     include CrmHelper
 
     helper_method :crm_money?, :crm_capability
+    # Redmine's menu_item registry is keyed by each concrete controller name;
+    # return the shared CRM item so all namespaced controllers highlight CRM.
+    def current_menu_item
+      :crm
+    end
 
     before_action :require_login
     before_action :enforce_crm_capability

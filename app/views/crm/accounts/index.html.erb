@@ -1,11 +1,12 @@
-<% html_title(@query && @query.persisted? ? @query.name : l(:label_crm_accounts)) %>
-
+<% title = @query && @query.persisted? ? @query.name : l(:label_crm_accounts) %>
+<% html_title title %>
 <div class="contextual">
-  <% if [:admin, :staff].include?(crm_capability) %>
-    <%= link_to l(:button_crm_new_account), crm_new_account_path, :class => 'icon icon-add' %>
+  <% if [:admin, :staff].include?(crm_capability.to_sym) %>
+    <%= link_to sprite_icon('add', l(:button_crm_new_account)), crm_new_account_path, :class => 'icon icon-add' %>
   <% end %>
 </div>
-<h2><%= @query && @query.persisted? ? h(@query.name) : l(:label_crm_accounts) %></h2>
+<%= render :partial => 'crm/shared/nav' %>
+<h2><%= h(title) %></h2>
 
 <% if @query %>
   <%= form_tag crm_accounts_path, :method => :get, :id => 'query_form' do %>
@@ -15,15 +16,23 @@
 
 <% if @record_count.to_i.zero? %>
   <p class="nodata"><%= l(:text_crm_no_accounts) %></p>
+<% else %>
+  <%= render_query_totals(@query) if @query %>
+  <%= render :partial => 'crm/shared/list', :locals => {
+        :records => @records, :query => @query, :record_type => 'account'
+      } %>
+  <% pages = Redmine::Pagination::Paginator.new(@record_count.to_i, @limit.to_i, params[:page]) %>
+  <span class="pagination"><%= pagination_links_full pages, nil %></span>
 <% end %>
-<%= render :partial => 'grid' %>
 
-<% content_for :sidebar do %>
-  <% if [:admin, :staff, :viewer].include?(crm_capability) && defined?(CrmAccountQuery) %>
-    <%= render_sidebar_queries(CrmAccountQuery, nil) %>
+<% unless crm_capability.to_sym == :contractor || @query.nil? %>
+  <% other_formats_links do |f| %>
+    <%= f.link_to_with_query_parameters 'CSV' %>
   <% end %>
 <% end %>
 
-<% content_for :header_tags do %>
-  <%= javascript_include_tag 'tabulator', 'sortable', 'crm', :plugin => 'redmine_crm' %>
+<% content_for :sidebar do %>
+  <% if @query && [:admin, :staff, :viewer].include?(crm_capability.to_sym) %>
+    <%= render_sidebar_queries(CrmAccountQuery, nil) %>
+  <% end %>
 <% end %>

@@ -45,6 +45,7 @@ module Crm
     def lead_warning?(result)
       return false unless result
       return result.warning? if result.respond_to?(:warning?)
+
       result.respond_to?(:warning) && result.warning
     end
 
@@ -90,11 +91,13 @@ module Crm
         @recent_activities = recent_activities
         @stale = @due = @overdue = @my_open_deals = []
         @totals = {}
+        @pipeline_totals = []
         @lead ||= {}
         return
       end
 
       deals = visible_deals
+      all_deals = visible_pipeline_deals
       today = Date.current
       @stale = deals.select { |deal| stale_deal?(deal) }
       @due = deals.select { |deal| deal.next_action_on == today }
@@ -102,6 +105,7 @@ module Crm
       @my_open_deals = deals.select { |deal| deal.owner_id == User.current.id }
       @recent_activities = recent_activities
       @totals = crm_money? ? dashboard_totals(deals) : {}
+      @pipeline_totals = crm_money? ? dashboard_pipeline_totals(all_deals) : []
       @lead ||= {}
     end
 
@@ -122,17 +126,30 @@ module Crm
 
       table = CrmActivity.table_name
       visible_activities.
+        includes(:account, :contact, :deal, :author).
         order(Arel.sql("COALESCE(#{table}.occurred_at, #{table}.created_on) DESC, #{table}.id DESC")).
         limit(10).
         to_a
     end
 
-
     def visible_deals
       return CrmDeal.none unless defined?(CrmDeal)
 
-      scope = CrmDeal.visible(User.current)
-      scope = scope.joins(:stage).where(:crm_pipeline_stages => {:kind => 'open'})
+      scope = CrmDeal.visible(User.current).
+        includes(:account, :contact, :pipeline, :stage).
+        joins(:stage).
+        where(:crm_pipeline_stages => {:kind => 'open'})
+      scope.respond_to?(:active) ? scope.active.to_a : scope.to_a
+    rescue ActiveRecord::StatementInvalid
+      CrmDeal.visible(User.current).to_a
+    end
+
+    def visible_pipeline_deals
+      return [] unless defined?(CrmDeal)
+
+      scope = CrmDeal.visible(User.current).
+        includes(:account, :contact, :pipeline, :stage)
+      scope = scope.active if scope.respond_to?(:active)
       scope.to_a
     rescue ActiveRecord::StatementInvalid
       CrmDeal.visible(User.current).to_a
@@ -166,6 +183,23 @@ module Crm
           probability ||= deal.stage.respond_to?(:probability) ? deal.stage.probability : 0
           totals[currency][:weighted_cents] += (deal.amount_cents.to_i * probability.to_i / 100)
         end
+      end
+    end
+
+    def dashboard_pipeline_totals(deals)
+      deals.group_by(&:stage).sort_by do |stage, _rows|
+        [stage&.pipeline&.position.to_i, stage&.position.to_i, stage&.id.to_i]
+      end.map do |stage, rows|
+        currencies = rows.group_by { |deal| deal.currency.to_s.presence || 'USD' }
+        {
+          :stage => stage,
+          :totals => currencies.transform_values do |currency_rows|
+            {
+              :open_cents => currency_rows.sum { |deal| deal.amount_cents.to_i },
+              :weighted_cents => currency_rows.sum { |deal| deal.weighted_cents.to_i }
+            }
+          end
+        }
       end
     end
   end

@@ -1,118 +1,139 @@
+<%= render :partial => 'crm/shared/nav' %>
 <% html_title l(:label_crm_dashboard) %>
 
-<div class="contextual">
-  <% if [:admin, :staff].include?(crm_capability) %>
-    <%= link_to l(:button_crm_new_lead), '#crm-new-lead', :class => 'icon icon-add' %>
-  <% end %>
-</div>
-
-<h2><%= l(:label_crm_dashboard) %></h2>
-
-<% if crm_capability == :contractor %>
-  <section class="box crm-dashboard-section">
-    <h3><%= l(:label_crm_accounts) %></h3>
-    <% if @accounts.to_a.any? %>
-      <ul class="crm-dashboard-list">
-        <% @accounts.to_a.each do |account| %>
-          <li><%= crm_record_link(account) %></li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="nodata"><%= l(:text_crm_no_accounts) %></p>
-    <% end %>
-  </section>
-
-  <section class="box crm-dashboard-section">
-    <h3><%= l(:label_crm_contacts) %></h3>
-    <% if @contacts.to_a.any? %>
-      <ul class="crm-dashboard-list">
-        <% @contacts.to_a.each do |contact| %>
-          <li><%= crm_record_link(contact) %></li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="nodata"><%= l(:text_crm_no_contacts) %></p>
-    <% end %>
-  </section>
-<% else %>
-  <div class="crm-dashboard-cards">
-    <% [[l(:label_crm_stale_deals), @stale, 'stale'],
-        [l(:label_crm_due_today), @due, 'due'],
-        [l(:label_crm_overdue_deals), @overdue, 'overdue']].each do |label, deals, key| %>
-      <section class="crm-dashboard-card crm-dashboard-card-<%= key %>">
-        <h3><%= label %></h3>
-        <p class="count"><%= deals.to_a.size %></p>
-        <% if deals.to_a.any? %>
-          <ul class="crm-dashboard-list">
-            <% deals.to_a.first(5).each do |deal| %>
-              <li><%= crm_record_link(deal) %></li>
-            <% end %>
-          </ul>
-        <% else %>
-          <p class="nodata"><%= l(:text_crm_no_matching_deals) %></p>
-        <% end %>
-      </section>
+<div class="crm crm-dashboard">
+  <div class="contextual">
+    <% if [:admin, :staff].include?(crm_capability) %>
+      <%= link_to sprite_icon('add', l(:button_crm_new_lead)), '#crm-new-lead', :class => 'icon icon-add' %>
     <% end %>
   </div>
 
-  <section class="box crm-dashboard-section">
-    <h3><%= l(:label_crm_my_open_deals) %></h3>
-    <% if @my_open_deals.to_a.any? %>
-      <ul class="crm-dashboard-list">
-        <% @my_open_deals.to_a.each do |deal| %>
-          <li>
-            <%= crm_record_link(deal) %>
-            <% if crm_money? && deal.respond_to?(:amount_cents) && deal.amount_cents.present? %>
-              <span class="amount"><%= crm_money(deal.amount_cents, deal.currency) %></span>
-            <% end %>
-          </li>
+  <h2><%= l(:label_crm_dashboard) %></h2>
+
+  <% if crm_capability == :contractor %>
+    <div class="splitcontentleft">
+      <div class="box">
+        <h3><%= l(:label_crm_accounts) %></h3>
+        <% if Array(@accounts).any? %>
+          <table class="list odd-even">
+            <thead><tr><th scope="col"><%= l(:field_crm_name) %></th></tr></thead>
+            <tbody>
+              <% Array(@accounts).each do |account| %>
+                <tr><td><%= crm_record_link(account) %></td></tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="nodata"><%= l(:text_crm_no_accounts) %></p>
         <% end %>
-      </ul>
-    <% else %>
-      <p class="nodata"><%= l(:text_crm_no_open_deals) %></p>
-    <% end %>
-  </section>
+      </div>
 
-  <% if crm_money? && @totals.present? %>
-    <section class="box crm-dashboard-section">
-      <h3><%= l(:label_crm_pipeline_totals) %></h3>
-      <ul class="crm-money-totals">
-        <% @totals.each do |currency, values| %>
-          <li>
-            <strong><%= h(currency) %></strong>
-            <span><%= l(:label_crm_open_total) %>: <%= crm_money(values[:open_cents] || values['open_cents'], currency) %></span>
-            <span><%= l(:label_crm_weighted_total) %>: <%= crm_money(values[:weighted_cents] || values['weighted_cents'], currency) %></span>
-          </li>
+      <div class="box">
+        <h3><%= l(:label_crm_contacts) %></h3>
+        <% if Array(@contacts).any? %>
+          <table class="list odd-even">
+            <thead><tr><th scope="col"><%= l(:field_crm_name) %></th><th scope="col"><%= l(:field_crm_account) %></th></tr></thead>
+            <tbody>
+              <% Array(@contacts).each do |contact| %>
+                <tr>
+                  <td><%= crm_record_link(contact) %></td>
+                  <td><%= contact.account ? crm_record_link(contact.account) : l(:label_crm_no_account) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="nodata"><%= l(:text_crm_no_contacts) %></p>
         <% end %>
-      </ul>
-    </section>
-  <% end %>
+      </div>
+    </div>
 
-  <% if [:admin, :staff].include?(crm_capability) %>
-    <section id="crm-new-lead" class="box crm-dashboard-section">
-      <h3><%= l(:label_crm_new_lead) %></h3>
-      <%= render :partial => 'lead_form' %>
-    </section>
-  <% end %>
-<% end %>
-
-<section class="box crm-dashboard-section">
-  <h3><%= l(:label_crm_recent_activities) %></h3>
-  <% if @recent_activities.to_a.any? %>
-    <ul class="crm-dashboard-list crm-activity-list">
-      <% @recent_activities.to_a.each do |activity| %>
-        <li>
-          <%= link_to h(activity.subject.presence || l(:label_crm_activity)), crm_activity_path(activity) %>
-          <span class="description"><%= h(activity.body.to_s.truncate(160)) %></span>
-          <time datetime="<%= activity.occurred_at&.iso8601 %>"><%= format_time(activity.occurred_at || activity.created_on) %></time>
-        </li>
-      <% end %>
-    </ul>
+    <div class="splitcontentright">
+      <%= render :partial => 'recent_activities' %>
+    </div>
   <% else %>
-    <p class="nodata"><%= l(:text_crm_no_recent_activities) %></p>
+    <div class="splitcontentleft">
+      <% [
+        [l(:label_crm_overdue_deals), @overdue],
+        [l(:label_crm_due_today), @due],
+        [l(:label_crm_stale_deals), @stale],
+        [l(:label_crm_my_open_deals), @my_open_deals]
+      ].each do |heading, deals| %>
+        <div class="box crm-dashboard-deal-box">
+          <h3><%= heading %></h3>
+          <% if Array(deals).any? %>
+            <table class="list odd-even crm-dashboard-table">
+              <thead>
+                <tr>
+                  <th scope="col"><%= l(:label_crm_deal) %></th>
+                  <th scope="col"><%= l(:field_crm_account) %></th>
+                  <th scope="col"><%= l(:field_crm_stage) %></th>
+                  <th scope="col"><%= l(:field_crm_next_action) %></th>
+                  <th scope="col"><%= l(:field_crm_next_action_on) %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% Array(deals).each do |deal| %>
+                  <tr>
+                    <td><%= crm_record_link(deal) %></td>
+                    <td><%= deal.account ? crm_record_link(deal.account) : l(:label_crm_no_account) %></td>
+                    <td><%= deal.stage ? h(deal.stage.name) : l(:field_crm_stage) %></td>
+                    <td><%= h(deal.next_action.present? ? crm_humanize_enum(deal.next_action) : '—') %></td>
+                    <td><%= deal.next_action_on ? format_date(deal.next_action_on) : '—' %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="nodata"><%= l(:text_crm_no_matching_deals) %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="splitcontentright">
+      <% if [:admin, :staff].include?(crm_capability) %>
+        <div id="crm-new-lead" class="box tabular">
+          <h3><%= l(:label_crm_new_lead) %></h3>
+          <%= render :partial => 'lead_form' %>
+        </div>
+      <% end %>
+
+
+      <% if crm_money? %>
+        <div class="box crm-dashboard-pipeline-totals">
+          <h3><%= l(:label_crm_pipeline_totals) %></h3>
+          <% if Array(@pipeline_totals).any? %>
+            <table class="list odd-even">
+              <thead>
+                <tr>
+                  <th scope="col"><%= l(:field_crm_stage) %></th>
+                  <th scope="col"><%= l(:label_crm_open_total) %></th>
+                  <th scope="col"><%= l(:label_crm_weighted_total) %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% Array(@pipeline_totals).each do |entry| %>
+                  <% entry[:totals].each do |currency, values| %>
+                    <tr>
+                      <td><%= entry[:stage] ? h(entry[:stage].name) : l(:field_crm_stage) %> (<%= h(currency) %>)</td>
+                      <td><%= crm_money(values[:open_cents], currency) %></td>
+                      <td><%= crm_money(values[:weighted_cents], currency) %></td>
+                    </tr>
+                  <% end %>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="nodata"><%= l(:text_crm_no_deals) %></p>
+          <% end %>
+        </div>
+      <% end %>
+      <%= render :partial => 'recent_activities' %>
+    </div>
   <% end %>
-</section>
+</div>
 
 <% content_for :header_tags do %>
-  <%= javascript_include_tag 'tabulator', 'sortable', 'crm', :plugin => 'redmine_crm' %>
+  <%= javascript_include_tag 'crm', :plugin => 'redmine_crm' %>
 <% end %>

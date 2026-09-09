@@ -1,31 +1,38 @@
-<%# frozen_string_literal: true %>
 <% record = local_assigns[:record] || @record %>
 <% issues = local_assigns[:issues] || (defined?(@issues) ? @issues : []) %>
 <% links = local_assigns[:links] || (record.respond_to?(:links) ? record.links : []) %>
-<% record_type = record.is_a?(CrmAccount) ? "account" : (record.is_a?(CrmContact) ? "contact" : "deal") %>
-<% create_path = { "account" => crm_account_links_path(record), "contact" => crm_contact_links_path(record), "deal" => crm_deal_links_path(record) }[record_type] %>
+<% record_type = record.is_a?(CrmAccount) ? 'account' : (record.is_a?(CrmContact) ? 'contact' : 'deal') %>
+<% create_path = {'account' => crm_account_links_path(record), 'contact' => crm_contact_links_path(record), 'deal' => crm_deal_links_path(record)}[record_type] %>
 
-<section class="crm crm-panel crm-links-panel" aria-labelledby="crm-links-heading">
+<section class="crm-related crm-links-panel" aria-labelledby="crm-links-heading">
   <h3 id="crm-links-heading"><%= l(:label_crm_issue_links) %></h3>
-  <% if Array(links).any? %>
-    <ul class="crm-issue-links">
-      <% Array(links).each do |crm_link| %>
-        <%= render :partial => "crm/links/link", :locals => { :crm_link => crm_link } %>
-      <% end %>
-    </ul>
+  <% visible_links = Array(links).select {|crm_link| crm_link.target && crm_link.target.visible?(User.current) } %>
+  <% if visible_links.any? %>
+    <table class="list odd-even">
+      <thead><tr><th><%= l(:field_crm_issue) %></th><th><%= l(:field_subject) %></th><% if Crm::Access.staff?(User.current) %><th><%= l(:label_crm_actions) %></th><% end %></tr></thead>
+      <tbody>
+        <% visible_links.each do |crm_link| %>
+          <% issue = crm_link.issue %>
+          <% next unless issue %>
+          <tr>
+            <td><%= link_to "##{issue.id}", issue_path(issue) %></td>
+            <td><%= h(issue.subject) %></td>
+            <% if Crm::Access.staff?(User.current) %><td><%= button_to l(:button_crm_unlink_issue), crm_link_path(crm_link), :method => :delete, :class => 'icon icon-del', :data => {:confirm => l(:text_crm_confirm_unlink_issue)} %></td><% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
   <% else %>
-    <p class="crm-empty"><%= l(:text_crm_no_issue_links) %></p>
+    <p class="nodata"><%= l(:text_crm_no_issue_links) %></p>
   <% end %>
 
   <% if Crm::Access.staff?(User.current) %>
-    <%= form_tag create_path, :method => :post, :class => "crm-inline-form" do %>
-      <%= label_tag "crm_link_issue_id", l(:field_crm_issue) %>
-      <%= select_tag "link[issue_id]",
-        options_from_collection_for_select(Array(issues), :id, :subject),
-        :id => "crm_link_issue_id",
-        :prompt => l(:prompt_crm_select_issue),
-        :required => true %>
-      <%= submit_tag l(:button_crm_link_issue), :class => "button" %>
+    <%= form_tag create_path, :method => :post, :class => 'box tabular crm-inline-form' do %>
+      <p>
+        <%= label_tag 'crm_link_issue_id', l(:field_crm_issue) %>
+        <%= select_tag 'link[issue_id]', options_from_collection_for_select(Array(issues), :id, :subject), :id => 'crm_link_issue_id', :prompt => l(:prompt_crm_select_issue), :required => true %>
+      </p>
+      <p class="buttons"><%= submit_tag l(:button_crm_link_issue) %></p>
     <% end %>
   <% end %>
 </section>

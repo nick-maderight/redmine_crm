@@ -1,0 +1,30 @@
+<ul>
+  <% if @record %>
+    <li><%= context_menu_link sprite_icon('edit', l(:button_edit)), crm_edit_contact_path(@record), :class => 'icon icon-edit' %></li>
+  <% end %>
+  <% if @has_active %>
+    <li><%= context_menu_link sprite_icon('locked', l(:button_crm_archive)),
+                              crm_bulk_contacts_path(:ids => @record_ids, :bulk_action => 'archive', :back_url => @back),
+                              :method => :post, :class => 'icon icon-lock' %></li>
+  <% end %>
+  <% if @has_archived %>
+    <li><%= context_menu_link sprite_icon('unlock', l(:button_crm_restore)),
+                              crm_bulk_contacts_path(:ids => @record_ids, :bulk_action => 'restore', :back_url => @back),
+                              :method => :post, :class => 'icon icon-unlock' %></li>
+  <% end %>
+  <li class="folder">
+    <a href="#" class="submenu"><%= l(:field_crm_owner) %></a>
+    <span class="icon-only"><%= sprite_icon('angle-right', :rtl => true) %></span>
+    <ul>
+      <li><%= context_menu_link l(:label_crm_unassigned),
+                                crm_bulk_contacts_path(:ids => @record_ids, :attributes => {:owner_id => ''}, :back_url => @back),
+                                :method => :post %></li>
+      <% @owners.each do |owner| %>
+        <li><%= context_menu_link owner.name,
+                                  crm_bulk_contacts_path(:ids => @record_ids, :attributes => {:owner_id => owner.id}, :back_url => @back),
+                                  :method => :post,
+                                  :selected => @record && @record.owner_id.to_i == owner.id %></li>
+      <% end %>
+    </ul>
+  </li>
+</ul>

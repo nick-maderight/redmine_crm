@@ -6,6 +6,30 @@ class CrmDeal < ApplicationRecord
   self.table_name = 'crm_deals'
   attr_accessor :crm_stage_entry_date
 
+  def amount
+    return @amount if defined?(@amount_invalid) && @amount_invalid
+    return nil if amount_cents.nil?
+
+    BigDecimal(amount_cents.to_s) / 100
+  end
+
+  def amount=(value)
+    @amount = value
+    if value.blank?
+      self.amount_cents = nil
+      @amount_invalid = false
+      return
+    end
+
+    self.amount_cents = (BigDecimal(value.to_s) * 100).round(0, BigDecimal::ROUND_HALF_UP).to_i
+    @amount_invalid = false
+  rescue ArgumentError
+    self.amount_cents = nil
+    @amount_invalid = true
+    errors.add(:amount, :invalid) if respond_to?(:errors)
+  end
+
+
   belongs_to :account, :class_name => 'CrmAccount', :optional => true, :inverse_of => :deals
   belongs_to :contact, :class_name => 'CrmContact', :optional => true, :inverse_of => :deals
   belongs_to :pipeline, :class_name => 'CrmPipeline', :inverse_of => :deals
@@ -28,7 +52,7 @@ class CrmDeal < ApplicationRecord
 
   safe_attributes(
     'name', 'description', 'account_id', 'contact_id', 'pipeline_id', 'stage_id', 'owner_id',
-    'amount_cents', 'currency', 'probability', 'expected_close_on', 'next_action',
+    'amount', 'amount_cents', 'currency', 'probability', 'expected_close_on', 'next_action',
     'next_action_on', 'custom_fields', 'custom_field_values',
     :if => lambda {|_deal, user| Crm::Access.staff?(user) }
   )

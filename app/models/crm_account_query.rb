@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require_dependency 'query' unless defined?(QueryColumn)
 
 # Query support shared by the four global CRM query subclasses.  It lives in
 # this file because the plugin deliberately has no second query base model.
@@ -160,6 +161,47 @@ module CrmQuerySupport
     false
   end
 end
+class CrmAssociationQueryColumn < QueryColumn
+  def initialize(association, attribute, options = {})
+    @association = association.to_sym
+    @attribute = attribute.to_sym
+    @column_name = (options[:column_name] || @association).to_sym
+    super(@column_name, options)
+  end
+
+  def value_object(object)
+    associated = object.public_send(@association)
+    associated && associated.public_send(@attribute)
+  end
+
+  alias value value_object
+
+  def group_value(object)
+    value_object(object)
+  end
+
+  def group_by_statement
+    sortable_value = sortable
+    sortable_value.is_a?(Array) ? sortable_value.join(',') : sortable_value.to_s
+  end
+
+  def css_classes
+    @css_classes ||= "#{@association}-#{@attribute}"
+  end
+end
+
+class CrmContactNameQueryColumn < QueryColumn
+  def initialize(options = {})
+    super(:name, options)
+  end
+
+  def value_object(object)
+    object.name
+  end
+
+  alias value value_object
+end
+
 
 class CrmAccountQuery < Query
   include CrmQuerySupport

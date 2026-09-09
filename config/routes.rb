@@ -82,5 +82,7 @@ scope :module => 'crm', :as => 'crm' do
     post  '/crm/admin/pipelines/:id/stages',       :to => 'stages#create',    :as => 'pipeline_stages'
     match '/crm/admin/stages/:id',                 :to => 'stages#update',    :via => [:put, :patch], :as => 'stage'
     delete '/crm/admin/stages/:id',                :to => 'stages#destroy'
+    get  '/crm/context_menus/:type', :to => 'context_menus#show', :as => 'context_menu'
+    post '/crm/context_menus/:type', :to => 'context_menus#show'
   end
 end

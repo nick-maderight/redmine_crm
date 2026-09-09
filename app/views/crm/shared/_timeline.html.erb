@@ -1,0 +1,30 @@
+<% record = local_assigns.fetch(:record) { @record } %>
+<% rows = local_assigns.fetch(:timeline) { @timeline || [] } %>
+<% composer = local_assigns.fetch(:composer, true) %>
+<% record_key = record.class.name.underscore.split('_').last %>
+
+<div class="crm-timeline">
+  <% if composer && [:admin, :staff].include?(crm_capability) %>
+    <%= form_for CrmActivity.new, :as => :activity, :url => crm_activities_path, :html => {:class => 'box tabular crm-timeline-composer'} do |f| %>
+      <fieldset>
+        <legend><%= l(:label_crm_timeline) %></legend>
+        <%= hidden_field_tag "activity[#{record_key}_id]", record.id %>
+        <p>
+          <%= f.label :kind %>
+          <%= f.select :kind, CrmActivity::KINDS.map {|kind| [l("label_crm_activity_#{kind}", :default => kind.humanize), kind] }, :include_blank => false %>
+        </p>
+        <p>
+          <%= f.label :occurred_at %>
+          <%= f.datetime_local_field :occurred_at, :value => Time.zone.now.strftime('%Y-%m-%dT%H:%M') %>
+        </p>
+        <p>
+          <%= f.label :body %>
+          <%= f.text_area :body, :rows => 4, :cols => 70, :placeholder => l(:text_crm_activity_body_placeholder) %>
+        </p>
+        <p class="buttons"><%= f.submit l(:button_crm_add_activity) %></p>
+      </fieldset>
+    <% end %>
+  <% end %>
+
+  <%= render :partial => 'crm/shared/history', :locals => {:rows => rows} %>
+</div>

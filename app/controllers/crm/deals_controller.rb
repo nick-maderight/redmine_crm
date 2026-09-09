@@ -37,7 +37,9 @@ module Crm
       return unless precheck_safe_attributes!(@record, attributes)
       return unless assign_record_attributes(@record, attributes, :create => true)
 
+      @record.save_attachments(params[:attachments])
       if @record.save
+        render_attachment_warning_if_needed(@record)
         render_mutation_success(@record, :status => :created)
       else
         render_record_errors(@record)
@@ -58,7 +60,9 @@ module Crm
       return unless precheck_safe_attributes!(@record, attributes)
       return unless assign_record_attributes(@record, attributes)
 
+      @record.save_attachments(params[:attachments])
       if @record.save
+        render_attachment_warning_if_needed(@record)
         render_mutation_success(@record)
       else
         render_record_errors(@record)

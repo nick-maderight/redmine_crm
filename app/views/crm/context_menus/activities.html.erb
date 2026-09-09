@@ -1,0 +1,12 @@
+<ul>
+  <% if @has_active %>
+    <li><%= context_menu_link sprite_icon('locked', l(:button_crm_archive)),
+                              crm_bulk_activities_path(:ids => @record_ids, :bulk_action => 'archive', :back_url => @back),
+                              :method => :post, :class => 'icon icon-lock' %></li>
+  <% end %>
+  <% if @has_archived %>
+    <li><%= context_menu_link sprite_icon('unlock', l(:button_crm_restore)),
+                              crm_bulk_activities_path(:ids => @record_ids, :bulk_action => 'restore', :back_url => @back),
+                              :method => :post, :class => 'icon icon-unlock' %></li>
+  <% end %>
+</ul>

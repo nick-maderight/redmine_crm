@@ -1,0 +1,38 @@
+<div class="box crm-dashboard-recent-activities">
+  <h3><%= l(:label_crm_recent_activities) %></h3>
+  <% if Array(@recent_activities).any? %>
+    <div id="crm-dashboard-history" class="journals crm-journals">
+      <% Array(@recent_activities).each do |activity| %>
+        <% activity_kind = crm_humanize_enum(activity.kind) %>
+        <% heading = if activity.kind.to_s == 'message' && activity.subject.present?
+                       "#{activity_kind} from #{activity.subject}"
+                     else
+                       "#{activity_kind} by #{crm_owner_name(activity.author_id)}"
+                     end %>
+        <% timestamp = activity.occurred_at || activity.created_on %>
+        <div class="journal">
+          <h4>
+            <%= time_tag(timestamp) if timestamp %>
+            <span class="author"><%= h(heading) %></span>
+          </h4>
+          <div class="wiki">
+            <% if activity.body.present? %>
+              <%= h(activity.body.to_s.truncate(280)) %>
+            <% else %>
+              <%= h(activity.subject.presence || l(:label_crm_activity)) %>
+            <% end %>
+          </div>
+          <p class="crm-journal-context">
+            <%= link_to h(activity.subject), crm_activity_path(activity) if activity.subject.present? %>
+            <% context_record = activity.deal || activity.contact || activity.account %>
+            <% if context_record %>
+              <span class="sep">·</span> <%= crm_record_link(context_record) %>
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="nodata"><%= l(:text_crm_no_recent_activities) %></p>
+  <% end %>
+</div>

@@ -1,34 +1,53 @@
-<% rows = local_assigns.fetch(:rows, @history_rows).to_a %>
-<% if rows.any? %>
-  <table class="list crm-history">
-    <thead>
-      <tr>
-        <th><%= l(:field_crm_changed_at) %></th>
-        <th><%= l(:field_crm_changed_by) %></th>
-        <th><%= l(:field_crm_property) %></th>
-        <th><%= l(:field_crm_old_value) %></th>
-        <th><%= l(:field_crm_new_value) %></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% rows.each do |row| %>
-        <% value_for = lambda { |key| row.respond_to?(:key?) && row.key?(key) ? row[key] : row[key.to_s] } %>
-        <% redacted = value_for.call(:redacted) %>
-        <% changed_at = value_for.call(:at) || value_for.call(:created_on) %>
-        <% actor = value_for.call(:user).presence || crm_owner_name(value_for.call(:user_id)) %>
-        <% property = value_for.call(:name).presence || crm_history_property_name(value_for.call(:prop_key)) %>
-        <% old_value = redacted ? l(:text_crm_redacted_value) : value_for.call(:old_value) %>
-        <% new_value = redacted ? l(:text_crm_redacted_value) : value_for.call(:value) %>
-        <tr>
-          <td><%= format_time(changed_at) if changed_at %></td>
-          <td><%= h(actor) %></td>
-          <td><%= h(property) %></td>
-          <td><%= h(old_value) %></td>
-          <td><%= h(new_value) %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-<% else %>
-  <p class="nodata"><%= l(:text_crm_no_history) %></p>
-<% end %>
+<% rows = Array(local_assigns.fetch(:rows, @history_rows || [])) %>
+<% show_all = params[:history].to_s == 'all' %>
+<% visible_rows = show_all ? rows : rows.first(25) %>
+<% value_for = lambda do |row, key|
+     if row.respond_to?(:key?) && row.key?(key)
+       row[key]
+     elsif row.respond_to?(:key?) && row.key?(key.to_s)
+       row[key.to_s]
+     end
+   end %>
+
+<div id="history" class="journals">
+  <% if rows.any? %>
+    <% visible_rows.each do |row| %>
+      <% item = value_for.call(row, :item) || (row.respond_to?(:prop_key) || row.respond_to?(:kind) ? row : nil) %>
+      <% kind = value_for.call(row, :kind).presence || (item.respond_to?(:prop_key) ? :change : :activity) %>
+      <% at = value_for.call(row, :at) || value_for.call(row, :created_on) || (item.respond_to?(:occurred_at) ? item.occurred_at : item.try(:created_on)) %>
+      <% author_id = value_for.call(row, :author_id) || value_for.call(row, :user_id) || (item.respond_to?(:author_id) ? item.author_id : item.try(:user_id)) %>
+      <% author = value_for.call(row, :user).presence || crm_owner_name(author_id) %>
+      <% redacted = value_for.call(row, :redacted) %>
+      <div class="journal <%= kind %>" id="journal-<%= item.try(:id) || value_for.call(row, :id) %>">
+        <h4>
+          <% if at %><%= time_tag at %><% end %>
+          <span class="author"><%= h(author) %></span>
+        </h4>
+        <% if kind.to_s == 'activity' && item %>
+          <p class="journal-kind"><strong><%= l("label_crm_activity_#{item.kind}", :default => item.kind.to_s.humanize) %></strong><%= " — #{h(item.subject)}" if item.respond_to?(:subject) && item.subject.present? %></p>
+          <% if item.respond_to?(:body) && item.body.present? %>
+          <div class="wiki"><%= textilizable item, :body, :attachments => ([:admin, :staff, :viewer].include?(crm_capability) && item.respond_to?(:attachments) ? item.attachments : []) %></div>
+          <% end %>
+        <% else %>
+          <% property_key = value_for.call(row, :prop_key) || item.try(:prop_key) %>
+          <% property = value_for.call(row, :name).presence || crm_history_property_name(property_key) %>
+          <% old_value = redacted ? l(:text_crm_redacted_value) : crm_history_display_value(property_key, value_for.call(row, :old_value) || item.try(:old_value)) %>
+          <% new_value = redacted ? l(:text_crm_redacted_value) : crm_history_display_value(property_key, value_for.call(row, :value) || item.try(:value)) %>
+          <ul class="details">
+            <li>
+              <strong><%= h(property) %>:</strong>
+              <%= h(old_value.to_s) if old_value.present? %>
+              <%= ' → ' if old_value.present? && new_value.present? %>
+              <%= h(new_value.to_s) if new_value.present? %>
+            </li>
+          </ul>
+        <% end %>
+      </div>
+    <% end %>
+  <% if !show_all && rows.length > visible_rows.length %>
+    <p class="pagination"><%= link_to l(:label_crm_show_all_history, :count => rows.length, :default => 'Show all %{count}'), url_for(request.query_parameters.merge('history' => 'all')) %></p>
+  <% end %>
+  <% else %>
+    <p class="nodata"><%= l(:text_crm_no_timeline_entries) %></p>
+  <% end %>
+</div>

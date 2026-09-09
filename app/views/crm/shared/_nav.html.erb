@@ -1,0 +1,29 @@
+<% capability = crm_capability.to_sym %>
+<% staff_or_viewer = [:admin, :staff, :viewer].include?(capability) %>
+<% items = [
+  [:dashboard, l(:label_crm_dashboard), crm_dashboard_path],
+  [:accounts, l(:label_crm_accounts), crm_accounts_path],
+  [:contacts, l(:label_crm_contacts), crm_contacts_path]
+] %>
+<% if staff_or_viewer %>
+  <% items << [:deals, l(:label_crm_deals), crm_deals_path] %>
+  <% items << [:board, l(:label_crm_deals_board), crm_deals_board_path] %>
+<% end %>
+<% items << [:activities, l(:label_crm_activities), crm_activities_path] %>
+<% items << [:pipelines, l(:heading_crm_pipelines), crm_pipelines_path] if capability == :admin %>
+<% current_tab = if controller_name == 'dashboard'
+                   :dashboard
+                 elsif controller_name == 'deals' && action_name == 'board'
+                   :board
+                 elsif %w[pipelines stages].include?(controller_name)
+                   :pipelines
+                 else
+                   controller_name.to_sym
+                 end %>
+<div class="tabs crm-tabs">
+  <ul>
+    <% items.each do |key, label, path| %>
+      <li><%= link_to label, path, :class => (current_tab == key ? 'selected' : nil) %></li>
+    <% end %>
+  </ul>
+</div>

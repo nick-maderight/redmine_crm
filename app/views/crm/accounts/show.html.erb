@@ -1,11 +1,12 @@
 <% html_title @account.name %>
+<%= render :partial => 'crm/shared/nav' %>
 
 <div class="contextual">
   <% if [:admin, :staff].include?(crm_capability) %>
-    <%= link_to l(:button_edit), crm_edit_account_path(@account), :class => 'icon icon-edit' %>
-    <%= link_to l(:button_crm_new_contact), crm_new_contact_path(:account_id => @account.id), :class => 'icon icon-add' %>
-    <%= link_to l(:button_crm_new_deal), crm_new_deal_path(:account_id => @account.id), :class => 'icon icon-add' %>
-    <%= link_to l(:button_crm_merge_into), crm_merge_account_path(@account), :class => 'icon icon-reload' unless @account.archived? %>
+    <%= link_to sprite_icon('edit', l(:button_edit)), crm_edit_account_path(@account), :class => 'icon icon-edit' %>
+    <%= link_to sprite_icon('add', l(:button_crm_new_contact)), crm_new_contact_path(:account_id => @account.id), :class => 'icon icon-add' %>
+    <%= link_to sprite_icon('add', l(:button_crm_new_deal)), crm_new_deal_path(:account_id => @account.id), :class => 'icon icon-add' %>
+    <%= link_to sprite_icon('reload', l(:button_crm_merge_into)), crm_merge_account_path(@account), :class => 'icon icon-reload' unless @account.archived? %>
     <% if @account.archived? %>
       <%= form_tag crm_restore_account_path(@account), :method => :put, :class => 'inline-form' do %>
         <%= hidden_field_tag :lock_version, @account.lock_version %>
@@ -18,110 +19,101 @@
       <% end %>
     <% end %>
   <% end %>
+  <%= link_to l(:button_crm_add_activity), '#history', :class => 'icon icon-comment' if [:admin, :staff].include?(crm_capability) %>
 </div>
 
-<h2><%= h(@account.name) %></h2>
-<% if @account.archived? %><p class="warning"><%= l(:text_crm_record_archived) %></p><% end %>
+<h2 class="inline-block"><%= h(@account.name) %></h2>
+<% account_badge_status = @account.status.to_s == 'past_client' ? 'closed' : 'open' %>
+<span class="badge badge-status-<%= account_badge_status %>"><%= l("label_crm_status_#{@account.status}", :default => @account.status.to_s.humanize) %></span>
+<% if @account.archived? %><span class="badge badge-status-archived"><%= l(:text_crm_record_archived) %></span><% end %>
 
-<div class="crm-record-layout">
-  <section class="box crm-properties">
-    <h3><%= l(:label_crm_properties) %></h3>
-    <dl>
-      <dt><%= l(:field_crm_name) %></dt><dd><%= h(@account.name) %></dd>
-      <% [[:domain, :field_crm_domain], [:website, :field_crm_website], [:phone, :field_crm_phone], [:status, :field_crm_status], [:address, :field_crm_address]].each do |attribute, label| %>
-        <% value = @account.public_send(attribute) if @account.respond_to?(attribute) %>
-        <% if value.present? %><% display_value = attribute == :status ? (l("label_crm_status_#{value}") rescue h(value)) : h(value) %><dt><%= l(label) %></dt><dd><%= display_value %></dd><% end %>
-      <% end %>
-      <% if @account.owner_id.present? %><dt><%= l(:field_crm_owner) %></dt><dd><%= h(crm_owner_name(@account.owner_id)) %></dd><% end %>
-      <% if @account.description.present? %><dt><%= l(:field_crm_description) %></dt><dd class="wiki"><%= simple_format h(@account.description) %></dd><% end %>
-      <% render_custom_field_values(@account) do |field, value| %>
-        <dt class="<%= field.css_classes %>"><%= h(field.name) %></dt><dd class="<%= field.css_classes %>"><%= value %></dd>
-      <% end %>
-    </dl>
-  </section>
+<div class="issue details">
+  <div class="attributes">
+    <%= crm_fields_rows do |rows|
+      rows.left l(:field_crm_name), h(@account.name), :class => 'name'
+      rows.left l(:field_crm_domain), h(@account.domain.presence || '-'), :class => 'domain'
+      rows.left l(:field_crm_website), (@account.website.present? ? link_to(h(@account.website), @account.website, :rel => 'noopener') : '-'), :class => 'website'
+      rows.left l(:field_crm_phone), h(@account.phone.presence || '-'), :class => 'phone'
+      rows.right l(:field_crm_status), l("label_crm_status_#{@account.status}", :default => @account.status.to_s.humanize), :class => 'status'
+      rows.right l(:field_crm_owner), (@account.owner_id.present? ? h(crm_owner_name(@account.owner_id)) : '-'), :class => 'owner'
+      rows.right l(:field_crm_address), h(@account.address.presence || '-'), :class => 'address'
+    end %>
+    <%= render_half_width_custom_fields_rows(@account) %>
+  </div>
+</div>
 
-  <section class="box crm-timeline">
-    <h3><%= l(:label_crm_timeline) %></h3>
-    <% if [:admin, :staff].include?(crm_capability) %>
-      <%= form_for CrmActivity.new, :as => :activity, :url => crm_activities_path, :html => {:class => 'crm-timeline-composer'} do |f| %>
-        <%= hidden_field_tag 'activity[account_id]', @account.id %>
-        <p><%= f.select :kind, [['note', 'note'], ['call', 'call'], ['meeting', 'meeting'], ['message', 'message']].map { |value, key| [l("label_crm_activity_#{key}"), key] }, :include_blank => false %></p>
-        <p><%= f.text_area :body, :rows => 4, :cols => 60, :placeholder => l(:text_crm_activity_body_placeholder) %></p>
-        <p><%= f.datetime_local_field :occurred_at, :value => (Time.zone.now.strftime('%Y-%m-%dT%H:%M')) %></p>
-        <p class="buttons"><%= f.submit l(:button_crm_add_activity) %></p>
-      <% end %>
-    <% end %>
-    <% if @timeline.to_a.any? %>
-      <ol class="crm-timeline-list">
-        <% @timeline.to_a.each do |entry| %>
-          <% item = entry[:item]; kind = entry[:kind].to_s; at = entry[:at] || (item.respond_to?(:created_on) ? item.created_on : nil) %>
-          <li class="crm-timeline-item crm-timeline-<%= kind %>">
-            <time datetime="<%= at&.iso8601 %>"><%= format_time(at) if at %></time>
-            <% if kind == 'activity' %>
-              <strong><%= l("label_crm_activity_#{item.kind}") rescue h(item.kind) %></strong>
-              <% if item.author_id.present? %><span class="actor"><%= h(crm_owner_name(item.author_id)) %></span><% end %>
-              <% if item.subject.present? %><h4><%= h(item.subject) %></h4><% end %>
-              <div class="wiki"><%= simple_format h(item.body.to_s) %></div>
-            <% else %>
-              <% old_value = item.respond_to?(:old_value) ? item.old_value : nil %>
-              <% new_value = item.respond_to?(:value) ? item.value : nil %>
-              <strong><%= l(:label_crm_change) %></strong>
-              <span class="property"><%= h(crm_history_property_name(item.prop_key)) %></span>
-              <span class="actor"><%= h(crm_owner_name(item.respond_to?(:user_id) ? item.user_id : nil)) %></span>
-              <% if old_value.present? || new_value.present? %>
-                <span class="values"><%= h(old_value.to_s) %> → <%= h(new_value.to_s) %></span>
-              <% end %>
-            <% end %>
-          </li>
+<% if @account.description.present? %>
+  <div class="description">
+    <p><strong><%= l(:field_crm_description) %></strong></p>
+    <div class="wiki"><%= textilizable @account, :description, :attachments => ([:admin, :staff, :viewer].include?(crm_capability) ? @account.attachments : []) %></div>
+  </div>
+<% end %>
+<%= render_full_width_custom_fields_rows(@account) %>
+
+<% contacts = @account.contacts.respond_to?(:active) ? @account.contacts.active.order(:last_name, :first_name) : @account.contacts.order(:last_name, :first_name) %>
+<section id="crm-contacts" class="crm-related">
+  <h3><%= l(:label_crm_contacts) %></h3>
+  <% if contacts.any? %>
+    <table class="list odd-even">
+      <thead><tr><th><%= l(:field_crm_name) %></th><th><%= l(:field_crm_email) %></th><th><%= l(:field_crm_job_title) %></th></tr></thead>
+      <tbody>
+        <% contacts.each do |contact| %>
+          <tr>
+            <td><%= crm_record_link(contact) %></td>
+            <td><%= mail_to contact.email if contact.email.present? %></td>
+            <td><%= h(contact.job_title) %></td>
+          </tr>
         <% end %>
-      </ol>
-    <% else %>
-      <p class="nodata"><%= l(:text_crm_no_timeline_entries) %></p>
-    <% end %>
-  </section>
-</div>
+      </tbody>
+    </table>
+  <% else %><p class="nodata"><%= l(:text_crm_no_contacts) %></p><% end %>
+</section>
 
-<div class="tabs crm-record-tabs">
-  <ul>
-    <li><a href="#crm-contacts"><%= l(:label_crm_contacts) %></a></li>
-    <% unless crm_capability == :contractor %><li><a href="#crm-deals"><%= l(:label_crm_deals) %></a></li><% end %>
-    <li><a href="#crm-issues"><%= l(:label_crm_issues) %></a></li>
-    <li><a href="#crm-projects"><%= l(:label_crm_projects) %></a></li>
-    <% if [:admin, :staff, :viewer].include?(crm_capability) %><li><a href="#crm-files"><%= l(:label_crm_files) %></a></li><% end %>
-    <% if [:admin, :staff, :viewer].include?(crm_capability) %><li><a href="#crm-history"><%= l(:label_crm_history) %></a></li><% end %>
-  </ul>
+<% unless crm_capability == :contractor %>
+  <% deals = @account.deals.respond_to?(:active) ? @account.deals.active.order(:name) : @account.deals.order(:name) %>
+  <section id="crm-deals" class="crm-related">
+    <h3><%= l(:label_crm_deals) %></h3>
+    <% if deals.any? %>
+      <table class="list odd-even">
+        <thead><tr><th><%= l(:field_crm_name) %></th><th><%= l(:field_crm_stage) %></th><% if crm_money? %><th><%= l(:field_crm_amount) %></th><% end %><th><%= l(:field_crm_next_action) %></th><th><%= l(:field_crm_next_action_on) %></th></tr></thead>
+        <tbody>
+          <% deals.each do |deal| %>
+            <tr>
+              <td><%= crm_record_link(deal) %></td>
+              <td><span class="badge badge-status-<%= deal.stage_kind.to_s.dasherize %>"><%= h(deal.stage && deal.stage.name) %></span></td>
+              <% if crm_money? %><td><%= crm_money(deal.amount_cents, deal.currency) if deal.amount_cents.present? %></td><% end %>
+              <td><%= h(deal.next_action) %></td>
+              <td><%= format_date(deal.next_action_on) if deal.next_action_on %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %><p class="nodata"><%= l(:text_crm_no_deals) %></p><% end %>
+  </section>
+<% end %>
 
-  <section id="crm-contacts" class="crm-tab-panel">
-    <h3><%= l(:label_crm_contacts) %></h3>
-    <% contacts = @account.contacts.to_a %>
-    <% if contacts.any? %><ul><% contacts.each do |contact| %><li><%= crm_record_link(contact) %></li><% end %></ul><% else %><p class="nodata"><%= l(:text_crm_no_contacts) %></p><% end %>
+<% account_projects = @account.account_projects.includes(:project).to_a %>
+<% linked_project_ids = account_projects.map(&:project_id) %>
+<% projects = if [:admin, :staff].include?(crm_capability)
+                Project.visible(User.current).where.not(:id => linked_project_ids).order(:name).limit(200)
+              else
+                []
+              end %>
+<%= render :partial => 'crm/account_projects/form', :locals => {:account => @account, :projects => projects, :account_projects => account_projects} %>
+
+<% links = @account.links.includes(:issue).to_a %>
+<% issues = if [:admin, :staff].include?(crm_capability) && defined?(Issue)
+              Issue.visible(User.current).order(:id => :desc).limit(200)
+            else
+              []
+            end %>
+<%= render :partial => 'crm/links/form', :locals => {:record => @account, :links => links, :issues => issues} %>
+
+<% if [:admin, :staff, :viewer].include?(crm_capability) %>
+  <section id="crm-files" class="crm-related">
+    <h3><%= l(:label_crm_files) %></h3>
+    <% if @account.attachments.any? %><%= link_to_attachments @account, :thumbnails => true %><% else %><p class="nodata"><%= l(:text_crm_no_attachments) %></p><% end %>
   </section>
-  <% unless crm_capability == :contractor %>
-    <section id="crm-deals" class="crm-tab-panel">
-      <h3><%= l(:label_crm_deals) %></h3>
-      <% deals = @account.deals.to_a %>
-      <% if deals.any? %><ul><% deals.each do |deal| %><li><%= crm_record_link(deal) %></li><% end %></ul><% else %><p class="nodata"><%= l(:text_crm_no_deals) %></p><% end %>
-    </section>
-  <% end %>
-  <section id="crm-issues" class="crm-tab-panel">
-    <h3><%= l(:label_crm_issues) %></h3>
-    <% links = @account.links.to_a %>
-    <% if links.any? %><ul><% links.each do |link| %><li><%= link_to h(link.issue.subject), issue_path(link.issue) if link.issue %></li><% end %></ul><% else %><p class="nodata"><%= l(:text_crm_no_linked_issues) %></p><% end %>
-  </section>
-  <section id="crm-projects" class="crm-tab-panel">
-    <h3><%= l(:label_crm_projects) %></h3>
-    <% projects = @account.projects.to_a %>
-    <% if projects.any? %><ul><% projects.each do |project| %><li><%= link_to h(project.name), project_path(project) %></li><% end %></ul><% else %><p class="nodata"><%= l(:text_crm_no_linked_projects) %></p><% end %>
-  </section>
-  <% if [:admin, :staff, :viewer].include?(crm_capability) %>
-    <section id="crm-files" class="crm-tab-panel">
-      <h3><%= l(:label_crm_files) %></h3>
-      <% if @attachments.to_a.any? %><%= link_to_attachments @account, :thumbnails => true %><% else %><p class="nodata"><%= l(:text_crm_no_attachments) %></p><% end %>
-      <% if [:admin, :staff].include?(crm_capability) %><%= render :partial => 'attachments/form', :locals => {:container => @account} %><% end %>
-    </section>
-    <section id="crm-history" class="crm-tab-panel">
-      <h3><%= l(:label_crm_history) %></h3>
-      <%= render :partial => 'crm/shared/history', :locals => {:rows => @history_rows} %>
-    </section>
-  <% end %>
-</div>
+<% end %>
+
+<%= render :partial => 'crm/shared/timeline', :locals => {:record => @account, :timeline => @timeline, :composer => true} %>
