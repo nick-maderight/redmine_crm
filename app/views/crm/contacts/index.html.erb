@@ -7,4 +7,4 @@
 <% if @record_count.to_i.zero? %><p class="nodata"><%= l(:text_crm_no_contacts) %></p><% end %>
 <%= render :partial => 'grid' %>
 <% content_for :sidebar do %><% if [:admin, :staff, :viewer].include?(crm_capability) && defined?(CrmContactQuery) %><%= render_sidebar_queries(CrmContactQuery, nil) %><% end %><% end %>
-<% content_for :header_tags do %><%= javascript_include_tag 'crm', :plugin => 'redmine_crm' %><% end %>
+<% content_for :header_tags do %><%= javascript_include_tag 'tabulator', 'sortable', 'crm', :plugin => 'redmine_crm' %><% end %>
