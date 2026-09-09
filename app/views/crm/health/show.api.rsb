@@ -9,7 +9,7 @@ api.health do
   end
   api.counts do
     @health[:counts].each do |name, count|
-      api.public_send(name, count)
+      api.method_missing(name.to_sym, count)
     end
   end
   api.latest_upwork_activity_at @health[:latest_upwork_activity_at]
@@ -19,7 +19,7 @@ api.health do
   api.feed_last_success_at @health[:feed_last_success_at]
   api.required_groups do
     @health[:required_groups].each do |name, present|
-      api.public_send(name, present)
+      api.method_missing(name.to_sym, present)
     end
   end
   if @health[:default_pipeline]
