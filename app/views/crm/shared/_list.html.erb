@@ -14,10 +14,11 @@
   column_count = columns.size + (context_menu_enabled ? 2 : 0)
 %>
 <% if context_menu_enabled %>
-  <%= form_tag({}, :data => {:cm_url => crm_context_menu_path(record_type)}) do -%>
+  <% context_menu %>
+  <form method="post" action="<%= url_for(:params => request.query_parameters) %>" data-cm-url="<%= crm_context_menu_path(record_type) %>" accept-charset="UTF-8">
+    <%= hidden_field_tag 'authenticity_token', form_authenticity_token, :id => nil %>
     <%= hidden_field_tag 'back_url', url_for(:params => request.query_parameters), :id => nil %>
     <%= query_columns_hidden_tags(query) %>
-<% end %>
 <% end %>
 <div class="autoscroll">
   <table class="list crm-<%= record_type.to_s.pluralize %> odd-even <%= query_for_columns&.css_classes %>">
@@ -77,3 +78,6 @@
     </tbody>
   </table>
 </div>
+<% if context_menu_enabled %>
+  </form>
+<% end %>
