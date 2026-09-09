@@ -159,4 +159,16 @@ class CrmBrowserIntegrationTest < Redmine::IntegrationTest
     assert_equal 1, payload['id']
     assert payload.key?('record')
   end
+
+  def test_global_search_renders_crm_hits_as_events
+    staff = crm_staff_user
+    log_user(staff.login, 'foo')
+
+    get '/search', :params => {:q => 'Acme', :crm_accounts => 1, :crm_deals => 1, :crm_activities => 1}
+
+    assert_response :success
+    assert_select 'dt.crm-account a[href=?]', '/crm/accounts/1', :text => /Acme Corporation/
+    assert_select 'dt.crm-deal a[href=?]', '/crm/deals/1', :text => /Acme renewal/
+    assert_select 'dt.crm-activity a[href=?]', '/crm/activities/1', :text => /Acme message/
+  end
 end

@@ -9,6 +9,39 @@ module Crm
       scope :archived, -> { where.not(:archived_on => nil) }
     end
 
+    # Redmine's search results page renders each hit through the acts_as_event interface.
+    def event_type
+      self.class.name.underscore.tr('_', '-')
+    end
+
+    def event_title
+      title = respond_to?(:name) ? name.to_s : (respond_to?(:subject) ? subject.to_s : '')
+      title.presence || "#{self.class.model_name.human} ##{id}"
+    end
+
+    def event_description
+      text = respond_to?(:description) ? description : (respond_to?(:body) ? body : nil)
+      text.to_s.truncate(255)
+    end
+
+    def event_datetime
+      (respond_to?(:occurred_at) && occurred_at) || (respond_to?(:updated_on) && updated_on) || created_on
+    end
+
+    def event_author
+      author_id = respond_to?(:author_id) ? self[:author_id] : (respond_to?(:owner_id) ? self[:owner_id] : nil)
+      author_id && User.find_by(:id => author_id)
+    end
+
+    def event_url
+      {:controller => "crm/#{self.class.name.sub(/\ACrm/, '').underscore.pluralize}", :action => 'show', :id => id, :only_path => true}
+    end
+
+    # CRM records are global: no project badge in search results.
+    def project
+      nil
+    end
+
     class_methods do
       # API callers get active records unless they explicitly request archived rows.
       def for_api(user=User.current, include_archived: false)
