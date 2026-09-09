@@ -8,6 +8,11 @@ module Crm
   class BaseController < ApplicationController
     helper :queries
     include QueriesHelper
+    helper :custom_fields
+    include CustomFieldsHelper
+    helper :attachments
+    helper :sort
+    include SortHelper
     helper :crm
     include CrmHelper
 

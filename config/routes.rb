@@ -9,6 +9,11 @@ API_FORMAT = {:format => /json|xml/}.freeze
 scope :module => 'crm', :as => 'crm' do
   # ---------------------------------------------------------------- API (.json / .xml)
   scope :constraints => API_FORMAT, :format => true do
+    # Lookup is a named collection endpoint and must precede the generic
+    # /:id route, otherwise Rails treats "lookup" as a contact id.
+    get  '/crm/contacts/lookup',       :to => 'contacts#lookup'
+    get  '/crm/deals/lookup',          :to => 'deals#lookup'
+
     %w(accounts contacts deals activities).each do |type|
       get    "/crm/#{type}",             :to => "#{type}#index",   :as => "api_#{type}"
       post   "/crm/#{type}",             :to => "#{type}#create"
@@ -18,8 +23,6 @@ scope :module => 'crm', :as => 'crm' do
       put    "/crm/#{type}/:id/restore", :to => "#{type}#restore"
     end
     put  '/crm/deals/:id/move',        :to => 'deals#move'
-    get  '/crm/contacts/lookup',       :to => 'contacts#lookup'
-    get  '/crm/deals/lookup',          :to => 'deals#lookup'
     post '/crm/accounts/:id/links',    :to => 'links#create',  :defaults => {:record_type => 'account'}
     post '/crm/contacts/:id/links',    :to => 'links#create',  :defaults => {:record_type => 'contact'}
     post '/crm/deals/:id/links',       :to => 'links#create',  :defaults => {:record_type => 'deal'}
@@ -38,7 +41,8 @@ scope :module => 'crm', :as => 'crm' do
   scope :format => false do
     get '/crm', :to => 'dashboard#index', :as => 'dashboard'
     post '/crm/leads', :to => 'dashboard#create_lead', :as => 'leads'
-
+    # Static segments before the :id routes, otherwise "board" resolves as an id.
+    get  '/crm/deals/board',           :to => 'deals#board',   :as => 'deals_board'
     %w(accounts contacts deals activities).each do |type|
       get   "/crm/#{type}",                 :to => "#{type}#index",   :as => type
       get   "/crm/#{type}/new",             :to => "#{type}#new",     :as => "new_#{type.singularize}"
@@ -50,7 +54,6 @@ scope :module => 'crm', :as => 'crm' do
       put   "/crm/#{type}/:id/restore",     :to => "#{type}#restore", :as => "restore_#{type.singularize}"
       post  "/crm/#{type}/bulk",            :to => "#{type}#bulk",    :as => "bulk_#{type}"
     end
-    get  '/crm/deals/board',           :to => 'deals#board',   :as => 'deals_board'
     put  '/crm/deals/:id/move',        :to => 'deals#move',    :as => 'move_deal'
     get  '/crm/accounts/:id/merge',    :to => 'merges#new',    :defaults => {:record_type => 'account'}, :as => 'merge_account'
     post '/crm/accounts/:id/merge',    :to => 'merges#create', :defaults => {:record_type => 'account'}

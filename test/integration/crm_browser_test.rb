@@ -21,8 +21,10 @@ class CrmBrowserIntegrationTest < Redmine::IntegrationTest
   end
 
   def test_browser_patch_returns_conflict_for_a_stale_lock_version
+    old_forgery_setting = ActionController::Base.allow_forgery_protection
     staff = crm_staff_user
     log_user(staff.login, 'foo')
+    ActionController::Base.allow_forgery_protection = true
     deal = CrmDeal.find(1)
     stale_version = deal.lock_version
     deal.update!(:name => 'Changed in another browser')
@@ -37,13 +39,15 @@ class CrmBrowserIntegrationTest < Redmine::IntegrationTest
           :headers => json_headers(token)
     assert_response :conflict
     assert_equal 'Changed in another browser', CrmDeal.find(1).name
+  ensure
+    ActionController::Base.allow_forgery_protection = old_forgery_setting
   end
 
   def test_browser_json_patch_requires_csrf_while_api_key_put_remains_available
     old_forgery_setting = ActionController::Base.allow_forgery_protection
-    ActionController::Base.allow_forgery_protection = true
     staff = crm_staff_user
     log_user(staff.login, 'foo')
+    ActionController::Base.allow_forgery_protection = true
     deal = CrmDeal.find(1)
 
     patch "/crm/deals/#{deal.id}",
@@ -52,11 +56,13 @@ class CrmBrowserIntegrationTest < Redmine::IntegrationTest
     assert_includes [403, 422], response.status
     assert_equal 'Acme renewal', CrmDeal.find(1).name
 
-    put "/crm/deals/#{deal.id}.json",
-        :params => {:crm_deal => {:name => 'API key edit', :lock_version => deal.lock_version}},
-        :headers => crm_api_headers(staff)
-    assert_includes [200, 204], response.status
-    assert_equal 'API key edit', CrmDeal.find(1).name
+    with_settings(:rest_api_enabled => '1') do
+      put "/crm/deals/#{deal.id}.json",
+          :params => {:crm_deal => {:name => 'API key edit', :lock_version => deal.lock_version}},
+          :headers => crm_api_headers(staff)
+      assert_includes [200, 204], response.status
+      assert_equal 'API key edit', CrmDeal.find(1).name
+    end
   ensure
     ActionController::Base.allow_forgery_protection = old_forgery_setting
   end

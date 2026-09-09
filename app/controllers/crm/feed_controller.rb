@@ -71,7 +71,7 @@ module Crm
     end
 
     def create_activity
-      attrs = feed_params(:activity)
+      attrs = record_params(CrmActivity)
       return unless ensure_feed_keys!(attrs, ACTIVITY_FIELDS)
       if attrs['external_source'].blank? || attrs['external_id'].blank?
         return render_feed_errors(nil, 'external_source and external_id are required')
