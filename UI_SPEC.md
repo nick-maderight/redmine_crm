@@ -59,7 +59,8 @@ Design doc: `/Users/zidiwang/tmp/redmine-crm/redmine-crm-design.org`. Contract: 
 - Related sections, each an `h3` + `table.list` (Redmine style, no Tabulator): account → Contacts (name, email,
   job title), Deals (name, stage, amount for money holders, next action), Projects (linked Redmine projects with
   link + unlink for staff; "Link project" select form), Issues (linked issues + link form); contact → Deals,
-  Activities; deal → Contact/Account, Issues, and a `Stage` select form (staff) that PUTs `move` (form, not JS).
+  Activities; deal → Issues, Projects (via account) and a `Stage` select form (staff) that PUTs `move` (form, not
+  JS). The deal's account and contact are links in the attributes grid and are not repeated as sections.
 - Timeline: below, `div#history.journals` with Redmine journal markup (`div.journal`, `h4` with time + author,
   `div.wiki` body) listing activities and change rows newest first; a composer form at the top styled like the
   issue "Add notes" box (`fieldset` with kind select, occurred_at datetime field default now, body textarea,
@@ -80,8 +81,10 @@ Design doc: `/Users/zidiwang/tmp/redmine-crm/redmine-crm-design.org`. Contract: 
 
 ## Board `/crm/deals/board`
 - Keep SortableJS; markup as `div.crm-board` of `div.box` columns each with `h3` = stage name + count (+ total
-  for money holders), cards `div.crm-card` with deal link, account, next action date; CSS in crm.css tuned to
-  Redmine's `.box` look. Drag → PUT move (already works). Contractors 404.
+  for money holders), cards `div.crm-card` with deal link, account, next action; CSS in crm.css tuned to
+  Redmine's `.box` look. Open-stage columns flex to fit the viewport (`flex: 1 1 200px`, min 180px); won/lost
+  columns are collapsed to a 150px count/total with a link to the filtered list; the board scrolls horizontally
+  only when the columns cannot fit. Drag → PUT move (already works). Contractors 404.
 
 ## Admin pages
 - `/crm/admin/pipelines`: Redmine admin layout (`layout 'admin'`), `table.list` of pipelines and their stages

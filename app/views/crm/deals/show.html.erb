@@ -66,19 +66,6 @@
 <%= render_full_width_custom_fields_rows(@deal) %>
 
 
-<section id="crm-account" class="crm-related">
-  <h3><%= l(:label_crm_account) %></h3>
-  <% if @deal.account %>
-    <table class="list odd-even"><thead><tr><th><%= l(:field_crm_account) %></th></tr></thead><tbody><tr><td><%= crm_record_link(@deal.account) %></td></tr></tbody></table>
-  <% else %><p class="nodata"><%= l(:text_crm_no_account) %></p><% end %>
-</section>
-<section id="crm-contact" class="crm-related">
-  <h3><%= l(:label_crm_contact) %></h3>
-  <% if @deal.contact %>
-    <table class="list odd-even"><thead><tr><th><%= l(:field_crm_contact) %></th><th><%= l(:field_crm_email) %></th></tr></thead><tbody><tr><td><%= crm_record_link(@deal.contact) %></td><td><%= mail_to @deal.contact.email if @deal.contact.email.present? %></td></tr></tbody></table>
-  <% else %><p class="nodata"><%= l(:text_crm_no_contact) %></p><% end %>
-</section>
-
 <% links = @deal.links.includes(:issue).to_a %>
 <% issues = if [:admin, :staff].include?(crm_capability) && defined?(Issue)
               Issue.visible(User.current).order(:id => :desc).limit(200)
