@@ -1,0 +1,6 @@
+api.contact do
+  api.id @contact.id
+  api.external_ref @contact.external_ref if @contact.external_ref.present?
+  api.first_name @contact.first_name if @contact.first_name.present?
+  api.last_name @contact.last_name if @contact.last_name.present?
+end

@@ -1,0 +1,23 @@
+<% editable = %w[first_name last_name owner owner_id] %>
+<% rows = @records.to_a.map do |record|
+     values = record.respond_to?(:attributes) ? record.attributes : {:id => record.id, :lock_version => record.lock_version}
+     if values['owner_id']
+       values['owner'] = crm_owner_name(values['owner_id'])
+       values.delete('owner_id')
+     end
+     values
+   end %>
+<% columns = if @query && @query.respond_to?(:available_columns)
+               @query.available_columns.map { |column| {:field => column.name.to_s, :title => column.caption.to_s, :editable => editable.include?(column.name.to_s)} }
+             else
+               [
+                 {:field => 'first_name', :title => l(:field_crm_first_name), :editable => true},
+                 {:field => 'last_name', :title => l(:field_crm_last_name), :editable => true},
+                 {:field => 'email', :title => l(:field_crm_email), :editable => false},
+                 {:field => 'account', :title => l(:field_crm_account), :editable => false},
+                 {:field => 'owner', :title => l(:field_crm_owner), :editable => true}
+               ]
+             end %>
+<div id="crm-contacts-grid" class="crm-grid" data-crm-rows="<%= h(ERB::Util.json_escape(rows.to_json)) %>" data-crm-update-url="<%= crm_contact_path(':id') %>" data-crm-columns="<%= h(ERB::Util.json_escape(columns.to_json)) %>" data-crm-record-type="contact">
+  <noscript><p class="nodata"><%= l(:text_crm_enable_javascript_for_grid) %></p></noscript>
+</div>

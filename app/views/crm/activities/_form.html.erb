@@ -1,0 +1,17 @@
+<div class="box tabular">
+  <p><%= f.select :kind, [['note', 'note'], ['call', 'call'], ['meeting', 'meeting'], ['message', 'message'], ['other', 'other']].map { |value, key| [l("label_crm_activity_#{key}"), key] }, :include_blank => false %></p>
+  <p><%= f.select :channel, [['upwork', 'upwork'], ['email', 'email'], ['phone', 'phone'], ['sms', 'sms'], ['in_person', 'in_person'], ['other', 'other']].map { |value, key| [l("label_crm_channel_#{key}"), key] }, :include_blank => true %></p>
+  <p><%= f.select :direction, [['inbound', 'inbound'], ['outbound', 'outbound']].map { |value, key| [l("label_crm_direction_#{key}"), key] }, :include_blank => true %></p>
+  <p><%= f.text_field :subject, :size => 60 %></p>
+  <p><%= f.text_area :body, :rows => 7, :cols => 70 %></p>
+  <p><%= f.datetime_local_field :occurred_at %></p>
+  <p><%= f.number_field :duration_minutes, :min => 0, :step => 1 %></p>
+  <p><%= f.select :visibility, [['staff', 'staff'], ['shared', 'shared']].map { |value, key| [l("label_crm_visibility_#{key}"), key] }, :include_blank => false %></p>
+  <p><%= f.collection_select :account_id, CrmAccount.visible(User.current).active.order(:name), :id, :name, :include_blank => l(:label_crm_no_account) %></p>
+  <p><%= f.collection_select :contact_id, CrmContact.visible(User.current).active.order(:last_name, :first_name), :id, :name, :include_blank => l(:label_crm_no_contact) %></p>
+  <p><%= f.collection_select :deal_id, CrmDeal.visible(User.current).active.order(:name), :id, :name, :include_blank => l(:label_crm_no_deal) %></p>
+  <% if f.object.new_record? %>
+    <p><%= f.text_field :external_source, :size => 30 %></p>
+    <p><%= f.text_field :external_id, :size => 60 %></p>
+  <% end %>
+</div>

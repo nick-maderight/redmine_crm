@@ -1,0 +1,14 @@
+---
+sales:
+  id: 1
+  name: Sales
+  position: 1
+  is_default: true
+  created_on: 2026-01-01 00:00:00 +00:00
+
+services:
+  id: 2
+  name: Services
+  position: 2
+  is_default: false
+  created_on: 2026-01-01 00:00:00 +00:00

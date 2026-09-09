@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Redmine ${{ matrix.redmine }} / Ruby ${{ matrix.ruby }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add 7.1-stable when that Redmine release is available and supported.
+        redmine: ['7.0-stable']
+        ruby: ['4.0']
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: redmine_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -h localhost"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out Redmine
+        uses: actions/checkout@v4
+        with:
+          repository: redmine/redmine
+          ref: ${{ matrix.redmine }}
+          path: redmine
+
+      - name: Check out redmine_crm
+        uses: actions/checkout@v4
+        with:
+          path: redmine/plugins/redmine_crm
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          working-directory: redmine
+
+      - name: Configure the test database
+        working-directory: redmine
+        run: |
+          cat > config/database.yml <<'YAML'
+          test:
+            adapter: postgresql
+            database: redmine_test
+            host: localhost
+            port: 5432
+            username: postgres
+            password: postgres
+            encoding: unicode
+          YAML
+
+      - name: Install dependencies
+        working-directory: redmine
+        run: |
+          bundle config set --local without ''
+          bundle install
+
+      - name: Create and migrate the test database
+        working-directory: redmine
+        env:
+          RAILS_ENV: test
+        run: bin/rails db:create db:migrate redmine:plugins:migrate
+
+      - name: Run redmine_crm tests
+        working-directory: redmine
+        env:
+          RAILS_ENV: test
+        run: bin/rails test plugins/redmine_crm/test
+
+      - name: Upload test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: redmine-crm-test-log-${{ matrix.redmine }}-ruby-${{ matrix.ruby }}
+          path: redmine/log/test.log
+          if-no-files-found: ignore

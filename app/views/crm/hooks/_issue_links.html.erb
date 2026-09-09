@@ -1,1 +1,17 @@
-<%# Issue page: CRM records linked to this issue, rendered only when the current user can see each target. Filled by the views slice. %>
+<% issue = context[:issue] %>
+<% links = issue && CrmLink.includes(:account, :contact, :deal).where(:issue_id => issue.id) %>
+<% visible_targets = [] %>
+<% Array(links).each do |crm_link| %>
+  <% target = crm_link.account || crm_link.contact || crm_link.deal %>
+  <% visible_targets << target if target && target.visible?(User.current) %>
+<% end %>
+<% if visible_targets.any? %>
+  <section class="crm crm-hook crm-issue-links" aria-labelledby="crm-issue-links-heading">
+    <h3 id="crm-issue-links-heading"><%= l(:label_crm_linked_records) %></h3>
+    <ul class="crm-issue-links">
+      <% visible_targets.uniq.each do |target| %>
+        <li><%= crm_record_link(target) %></li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

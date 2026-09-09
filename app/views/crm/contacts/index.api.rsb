@@ -1,0 +1,22 @@
+api.array :contacts, api_meta(:total_count => @record_count, :offset => @offset, :limit => @limit) do
+  @records.each do |contact|
+    api.contact do
+      api.id contact.id
+      api.account(:id => contact.account_id, :name => contact.account.name) if contact.account_id.present? && contact.account
+      api.first_name contact.first_name if contact.first_name.present?
+      api.last_name contact.last_name if contact.last_name.present?
+      api.email contact.email if contact.email.present?
+      api.phone contact.phone if contact.phone.present?
+      api.job_title contact.job_title if contact.job_title.present?
+      api.city contact.city if contact.city.present?
+      api.linkedin_url contact.linkedin_url if contact.linkedin_url.present?
+      api.x_url contact.x_url if contact.x_url.present?
+      api.owner crm_owner_name(contact.owner_id) if contact.owner_id.present?
+      api.external_ref contact.external_ref if contact.external_ref.present?
+      api.archived_on contact.archived_on if contact.respond_to?(:archived?) && contact.archived?
+      api.created_on contact.created_on
+      api.updated_on contact.updated_on
+      render_api_custom_values contact.visible_custom_field_values, api if contact.respond_to?(:visible_custom_field_values)
+    end
+  end
+end

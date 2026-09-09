@@ -1,0 +1,31 @@
+<%# frozen_string_literal: true %>
+<% record = local_assigns[:record] || @record %>
+<% issues = local_assigns[:issues] || (defined?(@issues) ? @issues : []) %>
+<% links = local_assigns[:links] || (record.respond_to?(:links) ? record.links : []) %>
+<% record_type = record.is_a?(CrmAccount) ? "account" : (record.is_a?(CrmContact) ? "contact" : "deal") %>
+<% create_path = { "account" => crm_account_links_path(record), "contact" => crm_contact_links_path(record), "deal" => crm_deal_links_path(record) }[record_type] %>
+
+<section class="crm crm-panel crm-links-panel" aria-labelledby="crm-links-heading">
+  <h3 id="crm-links-heading"><%= l(:label_crm_issue_links) %></h3>
+  <% if Array(links).any? %>
+    <ul class="crm-issue-links">
+      <% Array(links).each do |crm_link| %>
+        <%= render :partial => "crm/links/link", :locals => { :crm_link => crm_link } %>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="crm-empty"><%= l(:text_crm_no_issue_links) %></p>
+  <% end %>
+
+  <% if Crm::Access.staff?(User.current) %>
+    <%= form_tag create_path, :method => :post, :class => "crm-inline-form" do %>
+      <%= label_tag "crm_link_issue_id", l(:field_crm_issue) %>
+      <%= select_tag "link[issue_id]",
+        options_from_collection_for_select(Array(issues), :id, :subject),
+        :id => "crm_link_issue_id",
+        :prompt => l(:prompt_crm_select_issue),
+        :required => true %>
+      <%= submit_tag l(:button_crm_link_issue), :class => "button" %>
+    <% end %>
+  <% end %>
+</section>

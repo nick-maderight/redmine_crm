@@ -1,0 +1,52 @@
+deal = @deal || @record
+api.deal do
+  api.id deal.id
+  api.name deal.name
+  api.description deal.description if deal.respond_to?(:description) && deal.description.present?
+  api.account(:id => deal.account_id, :name => deal.account.name) if deal.account_id.present? && deal.account
+  api.contact(:id => deal.contact_id, :name => [deal.contact&.first_name, deal.contact&.last_name].compact.join(' ').strip) if deal.contact_id.present? && deal.contact
+  api.pipeline(:id => deal.pipeline_id, :name => deal.pipeline.name) if deal.pipeline_id.present? && deal.pipeline
+  api.stage(:id => deal.stage_id, :name => deal.stage.name, :kind => deal.stage.kind) if deal.stage_id.present? && deal.stage
+  api.owner crm_owner_name(deal.owner_id) if deal.owner_id.present?
+  if crm_money?
+    api.amount_cents deal.amount_cents if deal.amount_cents
+    api.currency deal.currency if deal.currency.present?
+    api.weighted_cents deal.weighted_cents if deal.respond_to?(:weighted_cents) && deal.weighted_cents
+  end
+  api.probability deal.probability if deal.probability.present?
+  api.expected_close_on deal.expected_close_on if deal.expected_close_on.present?
+  api.closed_on deal.closed_on if deal.closed_on.present?
+  api.next_action deal.next_action if deal.next_action.present?
+  api.next_action_on deal.next_action_on if deal.next_action_on.present?
+  api.external_ref deal.external_ref if deal.external_ref.present?
+  api.archived_on deal.archived_on if deal.respond_to?(:archived?) && deal.archived?
+  api.created_on deal.created_on
+  api.updated_on deal.updated_on
+  render_api_custom_values deal.visible_custom_field_values, api if deal.respond_to?(:visible_custom_field_values)
+
+  api.array :activities do
+    deal.activities.visible(User.current).each do |activity|
+      api.activity :id => activity.id, :kind => activity.kind, :occurred_at => activity.occurred_at
+    end
+  end if include_in_api_response?('activities') && deal.respond_to?(:activities)
+  api.array :changes do
+    crm_history_rows(deal, User.current).each do |row|
+      row = row.stringify_keys if row.respond_to?(:stringify_keys)
+      api.change do
+        key = row['prop_key'] || row['key'] || row[:prop_key] || row[:key]
+        api.prop_key key
+        api.created_on row['at'] || row[:at] || row['created_on'] || row[:created_on]
+        api.user row['user'] || row[:user] if row['user'] || row[:user]
+        unless row['redacted'] || row[:redacted] || (!crm_money? && %w[amount_cents currency weighted_cents weighted_amount revenue].include?(key.to_s))
+          api.old_value row['old_value'] || row[:old_value] if row.key?('old_value') || row.key?(:old_value)
+          api.value row['value'] || row[:value] if row.key?('value') || row.key?(:value)
+        end
+      end
+    end
+  end if include_in_api_response?('changes')
+  api.array :attachments do
+    deal.attachments.each do |attachment|
+      render_api_attachment(attachment, api)
+    end
+  end if include_in_api_response?('attachments') && deal.respond_to?(:attachments) && deal.attachments_visible?(User.current)
+end

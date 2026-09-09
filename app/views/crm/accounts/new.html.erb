@@ -1,0 +1,7 @@
+<% html_title l(:button_crm_new_account) %>
+<h2><%= l(:button_crm_new_account) %></h2>
+<%= labelled_form_for @account, :url => crm_accounts_path, :html => {:id => 'crm-account-form'} do |f| %>
+  <%= error_messages_for @account %>
+  <%= render :partial => 'form', :locals => {:f => f} %>
+  <p class="buttons"><%= submit_tag l(:button_create) %></p>
+<% end %>

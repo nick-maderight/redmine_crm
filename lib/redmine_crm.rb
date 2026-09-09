@@ -15,7 +15,7 @@ module RedmineCrm
     unless adapter =~ /postgres/i
       raise Redmine::PluginRequirementError, "redmine_crm requires PostgreSQL (adapter is #{adapter})"
     end
-    require_relative 'redmine_crm/access'
+    require_relative 'crm/access'
     require_relative 'redmine_crm/hooks'
     require_relative 'redmine_crm/custom_fields_tabs'
     RedmineCrm::CustomFieldsTabs.register!

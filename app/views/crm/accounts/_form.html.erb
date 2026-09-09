@@ -1,0 +1,17 @@
+<div class="box tabular">
+  <p><%= f.text_field :name, :required => true, :size => 60 %></p>
+  <p><%= f.text_field :domain, :size => 60 %></p>
+  <p><%= f.url_field :website, :size => 60 %></p>
+  <p><%= f.telephone_field :phone, :size => 30 %></p>
+  <p><%= f.text_area :address, :rows => 3, :cols => 60 %></p>
+  <p><%= f.select :status, [['lead', 'lead'], ['prospect', 'prospect'], ['active_client', 'active_client'], ['past_client', 'past_client'], ['partner', 'partner'], ['other', 'other']].map { |value, key| [l("label_crm_status_#{key}"), key] }, :include_blank => false %></p>
+  <% if f.object.respond_to?(:owner_id) %>
+    <p><%= f.collection_select :owner_id, User.active.sorted, :id, :name, :include_blank => l(:label_crm_unassigned) %></p>
+  <% end %>
+  <p><%= f.text_area :description, :rows => 5, :cols => 60 %></p>
+  <% if f.object.respond_to?(:custom_field_values) %>
+    <% f.object.custom_field_values.each do |value| %>
+      <p><%= custom_field_tag_with_label :crm_account, value %></p>
+    <% end %>
+  <% end %>
+</div>

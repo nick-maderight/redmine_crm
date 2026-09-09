@@ -1,11 +1,202 @@
 en:
   label_crm: CRM
+  label_crm_account: Account
   label_crm_account_plural: CRM accounts
-  label_crm_contact_plural: CRM contacts
-  label_crm_deal_plural: CRM deals
   label_crm_accounts: CRM accounts
+  label_crm_contact: Contact
+  label_crm_contact_plural: CRM contacts
   label_crm_contacts: CRM contacts
+  label_crm_deal: Deal
+  label_crm_deal_plural: CRM deals
   label_crm_deals: CRM deals
+  label_crm_activity: Activity
+  label_crm_activity_plural: CRM activities
   label_crm_activities: CRM activities
+  label_crm_dashboard: CRM dashboard
+  label_crm_deals_board: Deals board
+  label_crm_pipeline_totals: Pipeline totals
+  label_crm_open_total: Open total
+  label_crm_weighted_total: Weighted total
+  label_crm_my_open_deals: My open deals
+  label_crm_recent_activities: Recent activities
+  label_crm_stale_deals: Stale deals
+  label_crm_due_today: Due today
+  label_crm_overdue_deals: Overdue deals
+  label_crm_new_lead: New lead
+  label_crm_new_account: New account
+  label_crm_new_contact: New contact
+  label_crm_new_deal: New deal
+  label_crm_new_activity: New activity
+  label_crm_properties: Properties
+  label_crm_timeline: Timeline
+  label_crm_history: History
+  label_crm_files: Files
+  label_crm_issues: Issues
+  label_crm_projects: Projects
+  label_crm_stages: Stages
+  label_crm_actions: Actions
+  label_crm_change: Change
+  label_crm_author: Author
+  label_crm_linked_account: Linked CRM account
+  label_crm_linked_records: Linked CRM records
+  label_crm_linked_projects: Linked projects
+  label_crm_issue_links: Linked issues
+  label_crm_merge_source: Record to merge
+  label_crm_merge_survivor: Surviving record
+  label_crm_merge_candidates: Merge candidates
+  label_crm_issue_number: Issue #%{id}
+  label_crm_back_to_dashboard: Back to dashboard
+  label_crm_unassigned: Unassigned
+  label_crm_no_account: No account
+  label_crm_no_contact: No contact
+  label_crm_no_deal: No deal
+  label_crm_open: Open
+  label_crm_won: Won
+  label_crm_lost: Lost
+  label_crm_account_projects: Account projects
+  label_crm_merge_contacts: Contacts
+  label_crm_merge_activities: Activities
+  label_crm_merge_deals: Deals
+  label_crm_merge_links: Issue links
+  label_crm_merge_account_projects: Project links
+  label_crm_merge_custom_values: Custom fields
+  label_crm_status_lead: Lead
+  label_crm_status_prospect: Prospect
+  label_crm_status_active_client: Active client
+  label_crm_status_past_client: Past client
+  label_crm_status_partner: Partner
+  label_crm_status_other: Other
+  label_crm_activity_note: Note
+  label_crm_activity_call: Call
+  label_crm_activity_meeting: Meeting
+  label_crm_activity_message: Message
+  label_crm_activity_other: Other
+  label_crm_channel_upwork: Upwork
+  label_crm_channel_email: Email
+  label_crm_channel_phone: Phone
+  label_crm_channel_sms: SMS
+  label_crm_channel_in_person: In person
+  label_crm_channel_other: Other
+  label_crm_direction_inbound: Inbound
+  label_crm_direction_outbound: Outbound
+  label_crm_visibility_staff: Staff only
+  label_crm_visibility_shared: Shared with linked contractors
+  field_crm_name: Name
+  field_crm_domain: Domain
+  field_crm_website: Website
+  field_crm_phone: Phone
+  field_crm_address: Address
+  field_crm_status: Status
+  field_crm_owner: Owner
+  field_crm_description: Description
+  field_crm_account: Account
+  field_crm_contact: Contact
+  field_crm_deal: Deal
+  field_crm_deal_name: Deal name
+  field_crm_pipeline: Pipeline
+  field_crm_stage: Stage
+  field_crm_stage_name: Stage name
+  field_crm_probability: Probability (%)
+  field_crm_amount: Amount
+  field_crm_currency: Currency
+  field_crm_expected_close_on: Expected close date
+  field_crm_next_action: Next action
+  field_crm_next_action_on: Next action date
+  field_crm_kind: Kind
+  field_crm_channel: Channel
+  field_crm_direction: Direction
+  field_crm_subject: Subject
+  field_crm_occurred_at: Occurred at
+  field_crm_linkedin: LinkedIn
+  field_crm_x: X
+  field_crm_duration: Duration (minutes)
+  field_crm_visibility: Visibility
+  field_crm_author: Author
+  field_crm_issue: Issue
+  field_crm_project: Project
+  field_crm_position: Position
+  field_crm_color: Color
+  field_crm_followup_text: Follow-up text
+  field_crm_followup_due_days: Follow-up due days
+  field_crm_default_pipeline: Default pipeline
+  field_crm_first_name: First name
+  field_crm_last_name: Last name
+  field_crm_email: Email
+  field_crm_job_title: Job title
+  field_crm_city: City
+  field_crm_first_note: First note
+  field_crm_relation: Relation
+  field_crm_count: Count
+  field_crm_property: Property
+  field_crm_old_value: Previous value
+  field_crm_new_value: New value
+  field_crm_changed_at: Changed at
+  field_crm_changed_by: Changed by
+  field_crm_search_records: Search records
+  button_crm_new_lead: New lead
+  button_crm_new_account: New account
+  button_crm_new_contact: New contact
+  button_crm_new_deal: New deal
+  button_crm_new_activity: New activity
+  button_crm_create_lead: Create lead
+  button_crm_create_pipeline: Create pipeline
+  button_crm_add_stage: Add stage
+  button_crm_add_activity: Add activity
+  button_crm_edit_account: Edit account
+  button_crm_edit_contact: Edit contact
+  button_crm_edit_deal: Edit deal
+  button_crm_edit_activity: Edit activity
+  button_crm_open_board: Open board
+  button_crm_list_deals: Deal list
+  button_crm_merge_into: Merge into…
+  button_crm_preview_merge: Preview merge
+  button_crm_confirm_merge: Confirm merge
+  button_crm_choose_different_survivor: Choose a different survivor
+  button_crm_archive: Archive
+  button_crm_restore: Restore
+  button_crm_save: Save
+  button_crm_delete: Delete
+  button_crm_cancel: Cancel
+  button_crm_link_issue: Link issue
+  button_crm_unlink_issue: Unlink issue
+  button_crm_link_project: Link project
+  button_crm_unlink_project: Unlink project
+  button_create: Create
+  button_edit: Edit
+  button_save: Save
+  prompt_crm_select_issue: Select an issue
+  prompt_crm_select_project: Select a project
+  heading_crm_pipelines: CRM pipelines
+  heading_crm_new_pipeline: New pipeline
+  heading_crm_pipeline_list: Pipelines
+  heading_crm_merge_account: Merge account
+  heading_crm_merge_contact: Merge contact
+  heading_crm_choose_survivor: Choose a surviving record
+  heading_crm_merge_preview: Review merge
+  text_crm_merge_picker_help: Search the visible records and choose the record that should survive.
+  text_crm_activity_body_placeholder: Add a note about this activity…
+  text_crm_enable_javascript_for_grid: Enable JavaScript to edit this grid.
+  text_crm_no_accounts: No accounts found.
+  text_crm_no_contacts: No contacts found.
+  text_crm_no_deals: No deals found.
+  text_crm_no_activities: No activities found.
+  text_crm_no_deals_in_stage: No deals in this stage.
+  text_crm_no_matching_deals: No matching deals.
+  text_crm_no_open_deals: No open deals assigned to you.
+  text_crm_no_recent_activities: No recent activities.
+  text_crm_no_timeline_entries: No timeline entries.
+  text_crm_no_attachments: No attachments.
+  text_crm_no_history: No history entries.
+  text_crm_no_account: This record has no account.
+  text_crm_no_contact: This record has no contact.
+  text_crm_no_issue_links: No issues are linked.
+  text_crm_no_linked_issues: No issues are linked.
+  text_crm_no_linked_projects: No projects are linked.
+  text_crm_no_pipelines: No pipelines configured.
+  text_crm_record_archived: This record is archived.
+  text_crm_confirm_delete_pipeline: Delete this pipeline?
+  text_crm_confirm_delete_stage: Delete this stage?
+  text_crm_confirm_unlink_issue: Unlink this issue?
+  text_crm_confirm_unlink_project: Unlink this project?
   permission_view_crm_linked: View linked CRM account
   project_module_crm: CRM

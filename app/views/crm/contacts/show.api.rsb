@@ -1,0 +1,49 @@
+contact = @contact || @record
+api.contact do
+  api.id contact.id
+  api.account(:id => contact.account_id, :name => contact.account.name) if contact.account_id.present? && contact.account
+  api.first_name contact.first_name if contact.first_name.present?
+  api.last_name contact.last_name if contact.last_name.present?
+  api.email contact.email if contact.email.present?
+  api.phone contact.phone if contact.phone.present?
+  api.job_title contact.job_title if contact.job_title.present?
+  api.city contact.city if contact.city.present?
+  api.linkedin_url contact.linkedin_url if contact.linkedin_url.present?
+  api.x_url contact.x_url if contact.x_url.present?
+  api.owner crm_owner_name(contact.owner_id) if contact.owner_id.present?
+  api.external_ref contact.external_ref if contact.external_ref.present?
+  api.archived_on contact.archived_on if contact.respond_to?(:archived?) && contact.archived?
+  api.created_on contact.created_on
+  api.updated_on contact.updated_on
+  render_api_custom_values contact.visible_custom_field_values, api if contact.respond_to?(:visible_custom_field_values)
+
+  api.array :deals do
+    contact.deals.visible(User.current).each do |deal|
+      api.deal :id => deal.id, :name => deal.name
+    end
+  end if include_in_api_response?('deals') && contact.respond_to?(:deals)
+  api.array :activities do
+    contact.activities.visible(User.current).each do |activity|
+      api.activity :id => activity.id, :kind => activity.kind, :occurred_at => activity.occurred_at
+    end
+  end if include_in_api_response?('activities') && contact.respond_to?(:activities)
+  api.array :changes do
+    crm_history_rows(contact, User.current).each do |row|
+      row = row.stringify_keys if row.respond_to?(:stringify_keys)
+      api.change do
+        api.prop_key row['prop_key'] || row['key'] || row[:prop_key] || row[:key]
+        api.created_on row['at'] || row[:at] || row['created_on'] || row[:created_on]
+        api.user row['user'] || row[:user] if row['user'] || row[:user]
+        unless row['redacted'] || row[:redacted]
+          api.old_value row['old_value'] || row[:old_value] if row.key?('old_value') || row.key?(:old_value)
+          api.value row['value'] || row[:value] if row.key?('value') || row.key?(:value)
+        end
+      end
+    end
+  end if include_in_api_response?('changes')
+  api.array :attachments do
+    contact.attachments.each do |attachment|
+      render_api_attachment(attachment, api)
+    end
+  end if include_in_api_response?('attachments') && contact.respond_to?(:attachments) && contact.attachments_visible?(User.current)
+end

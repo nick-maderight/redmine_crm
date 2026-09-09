@@ -1,0 +1,18 @@
+<div class="box tabular">
+  <p><%= f.text_field :name, :required => true, :size => 60 %></p>
+  <% if f.object.respond_to?(:account_id) %><p><%= f.collection_select :account_id, CrmAccount.visible(User.current).active.order(:name), :id, :name, :include_blank => l(:label_crm_no_account) %></p><% end %>
+  <% if f.object.respond_to?(:contact_id) %><% contact_options = CrmContact.visible(User.current).active.order(:last_name, :first_name).map { |contact| [[contact.first_name, contact.last_name].compact.join(' ').presence || l(:label_crm_contact), contact.id] } %><p><%= f.select :contact_id, contact_options, :include_blank => l(:label_crm_no_contact) %></p><% end %>
+  <% if f.object.respond_to?(:pipeline_id) %><p><%= f.collection_select :pipeline_id, CrmPipeline.order(:position, :name), :id, :name, :include_blank => false %></p><% end %>
+  <% if f.object.respond_to?(:stage_id) %><p><%= f.collection_select :stage_id, CrmPipelineStage.order(:pipeline_id, :position), :id, :name, :include_blank => false %></p><% end %>
+  <% if f.object.respond_to?(:owner_id) %><p><%= f.collection_select :owner_id, User.active.sorted, :id, :name, :include_blank => l(:label_crm_unassigned) %></p><% end %>
+  <% if crm_money? %>
+    <p><%= f.number_field :amount_cents, :min => 0, :step => 1 %></p>
+    <p><%= f.text_field :currency, :maxlength => 3, :size => 5 %></p>
+  <% end %>
+  <p><%= f.number_field :probability, :min => 0, :max => 100, :step => 1 %></p>
+  <p><%= f.date_field :expected_close_on %></p>
+  <p><%= f.text_field :next_action, :size => 60 %></p>
+  <p><%= f.date_field :next_action_on %></p>
+  <p><%= f.text_area :description, :rows => 5, :cols => 60 %></p>
+  <% if f.object.respond_to?(:custom_field_values) %><% f.object.custom_field_values.each do |value| %><p><%= custom_field_tag_with_label :crm_deal, value %></p><% end %><% end %>
+</div>

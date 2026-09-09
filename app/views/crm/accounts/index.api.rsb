@@ -1,0 +1,20 @@
+api.array :accounts, api_meta(:total_count => @record_count, :offset => @offset, :limit => @limit) do
+  @records.each do |account|
+    api.account do
+      api.id account.id
+      api.name account.name
+      api.domain account.domain if account.domain.present?
+      api.website account.website if account.website.present?
+      api.phone account.phone if account.phone.present?
+      api.address account.address if account.address.present?
+      api.status account.status
+      api.owner crm_owner_name(account.owner_id) if account.owner_id.present?
+      api.description account.description if account.description.present?
+      api.external_ref account.external_ref if account.external_ref.present?
+      api.archived_on account.archived_on if account.respond_to?(:archived?) && account.archived?
+      api.created_on account.created_on
+      api.updated_on account.updated_on
+      render_api_custom_values account.visible_custom_field_values, api if account.respond_to?(:visible_custom_field_values)
+    end
+  end
+end

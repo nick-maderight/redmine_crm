@@ -1,0 +1,38 @@
+<% html_title l(:label_crm_deals_board) %>
+<div class="contextual"><%= link_to l(:button_crm_list_deals), crm_deals_path, :class => 'icon icon-list' %></div>
+<h2><%= l(:label_crm_deals_board) %><% if @pipeline %> <span class="subtitle"><%= h(@pipeline.name) %></span><% end %></h2>
+
+<div id="crm-deals-board" class="crm-board" data-crm-move-url="<%= crm_move_deal_path(':id') %>">
+  <% @stages.to_a.each do |stage| %>
+    <% stage_deals = (@deals_by_stage || {})[stage.id] || [] %>
+    <% stage_totals = (@totals_by_stage || {})[stage.id] || {} %>
+    <section class="crm-board-column crm-board-column-<%= h(stage.kind) %>" data-stage-id="<%= stage.id %>">
+      <header>
+        <h3><%= h(stage.name) %></h3>
+        <span class="badge badge-count"><%= stage_deals.size %></span>
+      </header>
+      <div class="crm-board-cards" data-stage-id="<%= stage.id %>">
+        <% if stage_deals.any? %>
+          <% stage_deals.each do |deal| %>
+            <article class="crm-deal-card" draggable="true" data-deal-id="<%= deal.id %>" data-lock-version="<%= deal.lock_version %>">
+              <h4><%= crm_record_link(deal) %></h4>
+              <% if deal.account %><p class="account"><%= crm_record_link(deal.account) %></p><% end %>
+              <% if deal.next_action.present? %><p class="next-action"><%= h(deal.next_action) %></p><% end %>
+              <% if deal.next_action_on.present? %><time datetime="<%= deal.next_action_on.iso8601 %>"><%= format_date(deal.next_action_on) %></time><% end %>
+              <% if crm_money? && deal.amount_cents.present? %><p class="amount"><%= crm_money(deal.amount_cents, deal.currency) %></p><% end %>
+            </article>
+          <% end %>
+        <% else %><p class="nodata"><%= l(:text_crm_no_deals_in_stage) %></p><% end %>
+      </div>
+      <% if crm_money? && stage_totals.present? %>
+        <footer class="crm-board-footer">
+          <% stage_totals.each do |currency, cents| %><span><%= h(currency) %>: <%= crm_money(cents, currency) %></span><% end %>
+        </footer>
+      <% end %>
+    </section>
+  <% end %>
+</div>
+
+<% content_for :header_tags do %>
+  <%= javascript_include_tag 'crm', :plugin => 'redmine_crm' %>
+<% end %>

@@ -1,0 +1,47 @@
+account = @account || @record
+api.account do
+  api.id account.id
+  api.name account.name
+  api.domain account.domain if account.domain.present?
+  api.website account.website if account.website.present?
+  api.phone account.phone if account.phone.present?
+  api.address account.address if account.address.present?
+  api.status account.status
+  api.owner crm_owner_name(account.owner_id) if account.owner_id.present?
+  api.description account.description if account.description.present?
+  api.external_ref account.external_ref if account.external_ref.present?
+  api.archived_on account.archived_on if account.respond_to?(:archived?) && account.archived?
+  api.created_on account.created_on
+  api.updated_on account.updated_on
+  render_api_custom_values account.visible_custom_field_values, api if account.respond_to?(:visible_custom_field_values)
+
+  api.array :contacts do
+    account.contacts.visible(User.current).each do |contact|
+      api.contact :id => contact.id, :name => [contact.first_name, contact.last_name].compact.join(' ').strip
+    end
+  end if include_in_api_response?('contacts') && account.respond_to?(:contacts)
+  api.array :projects do
+    account.projects.each do |project|
+      api.project :id => project.id, :name => project.name
+    end
+  end if include_in_api_response?('projects') && account.respond_to?(:projects)
+  api.array :changes do
+    crm_history_rows(account, User.current).each do |row|
+      row = row.stringify_keys if row.respond_to?(:stringify_keys)
+      api.change do
+        api.prop_key row['prop_key'] || row['key'] || row[:prop_key] || row[:key]
+        api.created_on row['at'] || row[:at] || row['created_on'] || row[:created_on]
+        api.user row['user'] || row[:user] if row['user'] || row[:user]
+        unless row['redacted'] || row[:redacted]
+          api.old_value row['old_value'] || row[:old_value] if row.key?('old_value') || row.key?(:old_value)
+          api.value row['value'] || row[:value] if row.key?('value') || row.key?(:value)
+        end
+      end
+    end
+  end if include_in_api_response?('changes')
+  api.array :attachments do
+    account.attachments.each do |attachment|
+      render_api_attachment(attachment, api)
+    end
+  end if include_in_api_response?('attachments') && account.respond_to?(:attachments) && account.attachments_visible?(User.current)
+end

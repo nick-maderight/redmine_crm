@@ -1,0 +1,29 @@
+<%# frozen_string_literal: true %>
+<% account = local_assigns[:account] || @account || @record %>
+<% projects = local_assigns[:projects] || (defined?(@projects) ? @projects : []) %>
+<% account_projects = local_assigns[:account_projects] || (account.respond_to?(:account_projects) ? account.account_projects : []) %>
+
+<section class="crm crm-panel crm-project-links-panel" aria-labelledby="crm-project-links-heading">
+  <h3 id="crm-project-links-heading"><%= l(:label_crm_linked_projects) %></h3>
+  <% if Array(account_projects).any? %>
+    <ul class="crm-project-links">
+      <% Array(account_projects).each do |account_project| %>
+        <%= render :partial => "crm/account_projects/project", :locals => { :account_project => account_project } %>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="crm-empty"><%= l(:text_crm_no_linked_projects) %></p>
+  <% end %>
+
+  <% if Crm::Access.staff?(User.current) %>
+    <%= form_tag crm_account_projects_path(account), :method => :post, :class => "crm-inline-form" do %>
+      <%= label_tag "crm_account_project_id", l(:field_crm_project) %>
+      <%= select_tag "account_project[project_id]",
+        options_from_collection_for_select(Array(projects), :id, :name),
+        :id => "crm_account_project_id",
+        :prompt => l(:prompt_crm_select_project),
+        :required => true %>
+      <%= submit_tag l(:button_crm_link_project), :class => "button" %>
+    <% end %>
+  <% end %>
+</section>

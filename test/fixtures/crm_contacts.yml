@@ -1,0 +1,76 @@
+---
+acme_contact:
+  id: 1
+  account_id: 1
+  first_name: Alice
+  last_name: Acme
+  email: alice@acme.example
+  phone: '+1 555 0110'
+  job_title: Buyer
+  city: Portland
+  linkedin_url: https://linkedin.example/alice
+  x_url:
+  owner_id: 3
+  external_ref: test:contact:alice
+  lock_version: 0
+  created_on: 2026-01-01 00:00:00 +00:00
+  updated_on: 2026-01-01 00:00:00 +00:00
+  archived_on:
+  merged_into_id:
+
+beta_contact:
+  id: 2
+  account_id: 2
+  first_name: Bob
+  last_name: Beta
+  email: bob@beta.example
+  phone: '+1 555 0111'
+  job_title: Sponsor
+  city: Seattle
+  linkedin_url:
+  x_url:
+  owner_id: 3
+  external_ref: test:contact:bob
+  lock_version: 0
+  created_on: 2026-01-02 00:00:00 +00:00
+  updated_on: 2026-01-02 00:00:00 +00:00
+  archived_on:
+  merged_into_id:
+
+no_account_contact:
+  id: 3
+  account_id:
+  first_name: Casey
+  last_name: Contact
+  email: casey@example
+  phone:
+  job_title:
+  city:
+  linkedin_url:
+  x_url:
+  owner_id:
+  external_ref: test:contact:casey
+  lock_version: 0
+  created_on: 2026-01-03 00:00:00 +00:00
+  updated_on: 2026-01-03 00:00:00 +00:00
+  archived_on:
+  merged_into_id:
+
+archived_contact:
+  id: 4
+  account_id: 3
+  first_name: Archived
+  last_name: Contact
+  email: archived@acme.example
+  phone:
+  job_title:
+  city:
+  linkedin_url:
+  x_url:
+  owner_id:
+  external_ref: test:contact:archived
+  lock_version: 0
+  created_on: 2026-01-04 00:00:00 +00:00
+  updated_on: 2026-01-04 00:00:00 +00:00
+  archived_on: 2026-01-05 00:00:00 +00:00
+  merged_into_id:

@@ -1,0 +1,60 @@
+---
+new_stage:
+  id: 1
+  pipeline_id: 1
+  name: New
+  position: 1
+  probability: 10
+  kind: open
+  color: '#4f46e5'
+  followup_text: Qualify this opportunity
+  followup_due_days: 7
+  created_on: 2026-01-01 00:00:00 +00:00
+
+qualifying_stage:
+  id: 2
+  pipeline_id: 1
+  name: Qualifying
+  position: 2
+  probability: 30
+  kind: open
+  color: '#2563eb'
+  followup_text: Confirm requirements
+  followup_due_days: 5
+  created_on: 2026-01-01 00:00:00 +00:00
+
+won_stage:
+  id: 3
+  pipeline_id: 1
+  name: Closed Won
+  position: 3
+  probability: 100
+  kind: won
+  color: '#16a34a'
+  followup_text:
+  followup_due_days:
+  created_on: 2026-01-01 00:00:00 +00:00
+
+lost_stage:
+  id: 4
+  pipeline_id: 1
+  name: Closed Lost
+  position: 4
+  probability: 0
+  kind: lost
+  color: '#dc2626'
+  followup_text:
+  followup_due_days:
+  created_on: 2026-01-01 00:00:00 +00:00
+
+services_new_stage:
+  id: 10
+  pipeline_id: 2
+  name: New
+  position: 1
+  probability: 20
+  kind: open
+  color: '#0f766e'
+  followup_text: Scope the service
+  followup_due_days: 3
+  created_on: 2026-01-01 00:00:00 +00:00

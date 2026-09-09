@@ -1,0 +1,63 @@
+---
+acme_deal:
+  id: 1
+  name: Acme renewal
+  description: Primary fixture opportunity
+  contact_id: 1
+  pipeline_id: 1
+  stage_id: 1
+  owner_id: 3
+  amount_cents: 100000
+  currency: USD
+  probability:
+  expected_close_on: 2026-04-01
+  closed_on:
+  next_action: Qualify this opportunity
+  next_action_on: 2026-01-08
+  external_ref: test:deal:acme
+  lock_version: 0
+  created_on: 2026-01-01 00:00:00 +00:00
+  updated_on: 2026-01-01 00:00:00 +00:00
+  archived_on:
+
+beta_deal:
+  id: 2
+  name: Beta integration
+  account_id: 2
+  contact_id: 2
+  pipeline_id: 1
+  stage_id: 2
+  description: Secondary fixture opportunity
+  amount_cents: 250000
+  currency: EUR
+  probability: 40
+  expected_close_on: 2026-05-01
+  closed_on:
+  next_action: Confirm requirements
+  next_action_on: 2026-01-07
+  external_ref: test:deal:beta
+  lock_version: 0
+  created_on: 2026-01-02 00:00:00 +00:00
+  updated_on: 2026-01-02 00:00:00 +00:00
+  archived_on:
+
+archived_deal:
+  id: 3
+  name: Archived opportunity
+  account_id: 3
+  contact_id: 4
+  pipeline_id: 1
+  stage_id: 1
+  owner_id:
+  amount_cents: 50000
+  currency: USD
+  probability:
+  description: Archived fixture opportunity
+  closed_on:
+  next_action:
+  next_action_on:
+  external_ref: test:deal:archived
+  lock_version: 0
+  created_on: 2026-01-03 00:00:00 +00:00
+  updated_on: 2026-01-03 00:00:00 +00:00
+  archived_on: 2026-01-04 00:00:00 +00:00

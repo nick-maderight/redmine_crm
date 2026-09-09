@@ -1,0 +1,79 @@
+<%# frozen_string_literal: true %>
+<% source = @source %>
+<% account_merge = source.is_a?(CrmAccount) %>
+<% source_path = account_merge ? crm_account_path(source) : crm_contact_path(source) %>
+<% merge_path = account_merge ? crm_merge_account_path(source) : crm_merge_contact_path(source) %>
+<% search_path = account_merge ? crm_accounts_path : crm_contacts_path %>
+<% target_id = params[:target_id].presence %>
+<% target = if target_id && source.class.respond_to?(:visible)
+              source.class.visible(User.current).where(:id => target_id).first
+            end %>
+
+<div class="crm crm-merge-page">
+  <div class="crm-toolbar">
+    <h2><%= l(account_merge ? :heading_crm_merge_account : :heading_crm_merge_contact) %></h2>
+    <%= link_to l(:button_crm_cancel), source_path %>
+  </div>
+
+  <section class="crm-panel crm-merge-source" aria-labelledby="crm-merge-source-heading">
+    <h3 id="crm-merge-source-heading"><%= l(:label_crm_merge_source) %></h3>
+    <p><%= crm_record_link(source) %></p>
+  </section>
+
+  <% if @preview.present? %>
+    <section class="crm-panel crm-merge-preview" aria-labelledby="crm-merge-preview-heading">
+      <h3 id="crm-merge-preview-heading"><%= l(:heading_crm_merge_preview) %></h3>
+      <% if target %>
+        <p><strong><%= l(:label_crm_merge_survivor) %>:</strong> <%= crm_record_link(target) %></p>
+      <% end %>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col"><%= l(:field_crm_relation) %></th>
+            <th scope="col"><%= l(:field_crm_count) %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @preview.each do |relation, count| %>
+            <tr>
+              <th scope="row"><%= l("label_crm_merge_#{relation}", :default => relation.to_s.humanize) %></th>
+              <td><%= count %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <%= form_tag merge_path, :method => :post, :class => "crm-actions" do %>
+        <%= hidden_field_tag :target_id, target_id %>
+        <%= submit_tag l(:button_crm_confirm_merge), :class => "button-positive" %>
+        <%= link_to l(:button_crm_choose_different_survivor), merge_path, :class => "button" %>
+      <% end %>
+    </section>
+  <% else %>
+    <section class="crm-panel crm-merge-picker" aria-labelledby="crm-merge-picker-heading">
+      <h3 id="crm-merge-picker-heading"><%= l(:heading_crm_choose_survivor) %></h3>
+      <p class="crm-help"><%= l(:text_crm_merge_picker_help) %></p>
+      <%= form_tag merge_path, :method => :get, :data => {
+        :crm_merge_picker => true,
+        :crm_search_url => search_path,
+        :crm_source_id => source.id
+      } do %>
+        <div class="crm-field">
+          <%= label_tag :crm_merge_search, l(:field_crm_search_records) %>
+          <%= search_field_tag :crm_merge_search, nil,
+            :autocomplete => "off",
+            :placeholder => l(:field_crm_search_records),
+            :data => { :crm_merge_search => true } %>
+          <div class="crm-merge-results" data-crm-picker-results role="listbox" aria-label="<%= h(l(:label_crm_merge_candidates)) %>"></div>
+        </div>
+        <%= hidden_field_tag :target_id, target_id, :data => { :crm_merge_target_id => true } %>
+        <p class="crm-selected-target" data-crm-selected-target>
+          <% if target %><%= crm_record_link(target) %><% end %>
+        </p>
+        <div class="crm-actions">
+          <%= submit_tag l(:button_crm_preview_merge), :class => "button-positive", :data => { :crm_merge_submit => true }, :disabled => target.nil? %>
+          <%= link_to l(:button_crm_cancel), source_path, :class => "button" %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</div>

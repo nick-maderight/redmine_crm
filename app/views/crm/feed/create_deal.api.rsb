@@ -1,0 +1,8 @@
+api.deal do
+  api.id @deal.id
+  api.external_ref @deal.external_ref if @deal.external_ref.present?
+  api.name @deal.name
+  api.contact_id @deal.contact_id if @deal.contact_id
+  api.pipeline_id @deal.pipeline_id
+  api.stage_id @deal.stage_id
+end

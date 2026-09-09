@@ -1,0 +1,22 @@
+api.array :activities, api_meta(:total_count => @record_count, :offset => @offset, :limit => @limit) do
+  @records.each do |activity|
+    api.activity do
+      api.id activity.id
+      api.kind activity.kind
+      api.channel activity.channel if activity.channel.present?
+      api.direction activity.direction if activity.direction.present?
+      api.subject activity.subject if activity.subject.present?
+      api.body activity.body if activity.body.present?
+      api.occurred_at activity.occurred_at if activity.occurred_at.present?
+      api.duration_minutes activity.duration_minutes if activity.duration_minutes.present?
+      api.account(:id => activity.account_id, :name => activity.account.name) if activity.account_id.present? && activity.account
+      api.deal(:id => activity.deal_id, :name => activity.deal.name) if activity.deal_id.present? && activity.deal && (Crm::Access.staff?(User.current) || Crm::Access.viewer?(User.current))
+      api.visibility activity.visibility if Crm::Access.staff?(User.current) || Crm::Access.viewer?(User.current)
+      api.external_source activity.external_source if activity.external_source.present?
+      api.external_id activity.external_id if activity.external_id.present?
+      api.archived_on activity.archived_on if activity.respond_to?(:archived?) && activity.archived?
+      api.created_on activity.created_on
+      api.updated_on activity.updated_on
+    end
+  end
+end

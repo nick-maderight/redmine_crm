@@ -1,0 +1,110 @@
+<%# frozen_string_literal: true %>
+<% pipelines = Array(@pipelines) %>
+
+<div class="crm crm-admin crm-admin-pipelines">
+  <div class="crm-toolbar">
+    <h2><%= l(:heading_crm_pipelines) %></h2>
+    <%= link_to l(:label_crm_back_to_dashboard), crm_dashboard_path, :class => "button" %>
+  </div>
+
+  <section class="crm-admin-panel" aria-labelledby="crm-new-pipeline-heading">
+    <h3 id="crm-new-pipeline-heading"><%= l(:heading_crm_new_pipeline) %></h3>
+    <%= form_tag crm_pipelines_path, :method => :post, :class => "crm-inline-form" do %>
+      <div class="crm-field">
+        <%= label_tag "pipeline_name", l(:field_crm_name) %>
+        <%= text_field_tag "pipeline[name]", nil, :id => "pipeline_name", :required => true, :maxlength => 60 %>
+      </div>
+      <div class="crm-field">
+        <%= label_tag "pipeline_position", l(:field_crm_position) %>
+        <%= number_field_tag "pipeline[position]", nil, :id => "pipeline_position", :min => 0 %>
+      </div>
+      <label class="crm-checkbox">
+        <%= check_box_tag "pipeline[is_default]", "1", false %>
+        <%= l(:field_crm_default_pipeline) %>
+      </label>
+      <%= submit_tag l(:button_crm_create_pipeline), :class => "button-positive" %>
+    <% end %>
+  </section>
+
+  <section class="crm-admin-panel" aria-labelledby="crm-pipeline-list-heading">
+    <h3 id="crm-pipeline-list-heading"><%= l(:heading_crm_pipeline_list) %></h3>
+    <% if pipelines.empty? %>
+      <p class="crm-empty"><%= l(:text_crm_no_pipelines) %></p>
+    <% else %>
+      <table class="crm-admin-table">
+        <thead>
+          <tr>
+            <th scope="col"><%= l(:field_crm_name) %></th>
+            <th scope="col"><%= l(:field_crm_position) %></th>
+            <th scope="col"><%= l(:field_crm_default_pipeline) %></th>
+            <th scope="col"><%= l(:label_crm_stages) %></th>
+            <th scope="col"><%= l(:label_crm_actions) %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pipelines.each do |pipeline| %>
+            <tr id="crm-pipeline-<%= pipeline.id %>">
+              <td colspan="5">
+                <%= form_tag crm_pipeline_path(pipeline), :method => :patch, :class => "crm-inline-form" do %>
+                  <%= hidden_field_tag "pipeline[id]", pipeline.id %>
+                  <div class="crm-field">
+                    <%= label_tag "pipeline_#{pipeline.id}_name", l(:field_crm_name) %>
+                    <%= text_field_tag "pipeline[name]", pipeline.name, :id => "pipeline_#{pipeline.id}_name", :required => true, :maxlength => 60 %>
+                  </div>
+                  <div class="crm-field">
+                    <%= label_tag "pipeline_#{pipeline.id}_position", l(:field_crm_position) %>
+                    <%= number_field_tag "pipeline[position]", pipeline.position, :id => "pipeline_#{pipeline.id}_position", :min => 0 %>
+                  </div>
+                  <label class="crm-checkbox">
+                    <%= check_box_tag "pipeline[is_default]", "1", pipeline.is_default? %>
+                    <%= l(:field_crm_default_pipeline) %>
+                  </label>
+                  <%= submit_tag l(:button_crm_save), :class => "button" %>
+                <% end %>
+                <%= button_to l(:button_crm_delete), crm_pipeline_path(pipeline),
+                  :method => :delete,
+                  :class => "button crm-button-danger",
+                  :data => { :confirm => l(:text_crm_confirm_delete_pipeline) } %>
+              </td>
+            </tr>
+            <tr>
+              <td></td>
+              <td colspan="4">
+                <table class="crm-admin-table crm-stage-table">
+                  <thead>
+                    <tr>
+                      <th scope="col"><%= l(:field_crm_stage_name) %></th>
+                      <th scope="col"><%= l(:field_crm_position) %></th>
+                      <th scope="col"><%= l(:field_crm_probability) %></th>
+                      <th scope="col"><%= l(:field_crm_kind) %></th>
+                      <th scope="col"><%= l(:field_crm_color) %></th>
+                      <th scope="col"><%= l(:label_crm_actions) %></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% pipeline.stages.each do |stage| %>
+                      <%= render :partial => "crm/stages/form", :locals => { :stage => stage, :pipeline => pipeline } %>
+                    <% end %>
+                    <tr>
+                      <td colspan="6">
+                        <%= form_tag crm_pipeline_stages_path(pipeline), :method => :post, :class => "crm-inline-form" do %>
+                          <%= hidden_field_tag "stage[pipeline_id]", pipeline.id %>
+                          <%= text_field_tag "stage[name]", nil, :placeholder => l(:field_crm_stage_name), :required => true, :maxlength => 60 %>
+                          <%= number_field_tag "stage[position]", nil, :placeholder => l(:field_crm_position), :min => 0 %>
+                          <%= number_field_tag "stage[probability]", 0, :placeholder => l(:field_crm_probability), :min => 0, :max => 100 %>
+                          <%= select_tag "stage[kind]", options_for_select([[l(:label_crm_open), "open"], [l(:label_crm_won), "won"], [l(:label_crm_lost), "lost"]], "open") %>
+                          <%= text_field_tag "stage[color]", nil, :placeholder => l(:field_crm_color), :maxlength => 7 %>
+                          <%= submit_tag l(:button_crm_add_stage), :class => "button" %>
+                        <% end %>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </section>
+</div>

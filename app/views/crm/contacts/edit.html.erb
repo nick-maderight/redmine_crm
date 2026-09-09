@@ -1,0 +1,8 @@
+<% html_title l(:button_crm_edit_contact) %>
+<h2><%= l(:button_crm_edit_contact) %></h2>
+<%= labelled_form_for @contact, :url => crm_contact_path(@contact), :html => {:method => :put, :id => 'crm-contact-form'} do |f| %>
+  <%= error_messages_for @contact %>
+  <%= render :partial => 'form', :locals => {:f => f} %>
+  <%= hidden_field_tag :lock_version, @contact.lock_version %>
+  <p class="buttons"><%= submit_tag l(:button_save) %></p>
+<% end %>

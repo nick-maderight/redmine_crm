@@ -1,0 +1,7 @@
+api.activity do
+  api.id @activity.id
+  api.external_source @activity.external_source
+  api.external_id @activity.external_id
+  api.kind @activity.kind
+  api.occurred_at @activity.occurred_at if @activity.occurred_at
+end

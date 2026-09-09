@@ -1,0 +1,22 @@
+<% editable = %w[kind occurred_at] %>
+<% rows = @records.to_a.map do |record|
+     values = record.respond_to?(:attributes) ? record.attributes : {:id => record.id, :lock_version => record.lock_version}
+     if values['author_id']
+       values['author'] = crm_owner_name(values['author_id'])
+       values.delete('author_id')
+     end
+     crm_capability == :contractor ? values.except('deal_id') : values
+   end %>
+<% columns = if @query && @query.respond_to?(:available_columns)
+               @query.available_columns.map { |column| {:field => column.name.to_s, :title => column.caption.to_s, :editable => editable.include?(column.name.to_s)} }
+             else
+               [
+                 {:field => 'kind', :title => l(:field_crm_kind), :editable => true},
+                 {:field => 'subject', :title => l(:field_crm_subject), :editable => false},
+                 {:field => 'occurred_at', :title => l(:field_crm_occurred_at), :editable => true},
+                 {:field => 'author', :title => l(:field_crm_author), :editable => false}
+               ]
+             end %>
+<div id="crm-activities-grid" class="crm-grid" data-crm-rows="<%= h(ERB::Util.json_escape(rows.to_json)) %>" data-crm-update-url="<%= crm_activity_path(':id') %>" data-crm-columns="<%= h(ERB::Util.json_escape(columns.to_json)) %>" data-crm-record-type="activity">
+  <noscript><p class="nodata"><%= l(:text_crm_enable_javascript_for_grid) %></p></noscript>
+</div>

@@ -1,0 +1,4 @@
+api.feed_status do
+  api.feed_contract_version @feed_status[:feed_contract_version]
+  api.feed_last_success_at @feed_status[:feed_last_success_at]
+end

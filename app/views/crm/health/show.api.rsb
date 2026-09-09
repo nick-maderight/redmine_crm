@@ -1,0 +1,39 @@
+api.health do
+  api.schema_version @health[:schema_version]
+  api.migration_version @health[:migration_version]
+  api.asset_state @health[:asset_state]
+  api.readiness do
+    api.groups @health.dig(:readiness, :groups)
+    api.default_pipeline @health.dig(:readiness, :default_pipeline)
+    api.first_open_stage @health.dig(:readiness, :first_open_stage)
+  end
+  api.counts do
+    @health[:counts].each do |name, count|
+      api.public_send(name, count)
+    end
+  end
+  api.latest_upwork_activity_at @health[:latest_upwork_activity_at]
+  api.upwork_activity_age_seconds @health[:upwork_activity_age_seconds]
+  api.freshness @health[:freshness]
+  api.contract_version @health[:contract_version]
+  api.feed_last_success_at @health[:feed_last_success_at]
+  api.required_groups do
+    @health[:required_groups].each do |name, present|
+      api.public_send(name, present)
+    end
+  end
+  if @health[:default_pipeline]
+    pipeline = @health[:default_pipeline]
+    api.default_pipeline_info do
+      api.id pipeline[:id]
+      api.name pipeline[:name]
+      api.first_open_stage do
+        stage = pipeline[:first_open_stage]
+        api.id stage[:id]
+        api.name stage[:name]
+        api.kind stage[:kind]
+        api.present stage[:present]
+      end if pipeline[:first_open_stage]
+    end
+  end
+end

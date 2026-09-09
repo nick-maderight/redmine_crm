@@ -1,0 +1,8 @@
+---
+acme_project:
+  account_id: 1
+  project_id: 1
+
+beta_project:
+  account_id: 2
+  project_id: 2

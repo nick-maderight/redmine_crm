@@ -1,0 +1,73 @@
+<% html_title @deal.name %>
+<div class="contextual">
+  <% if [:admin, :staff].include?(crm_capability) %>
+    <%= link_to l(:button_edit), crm_edit_deal_path(@deal), :class => 'icon icon-edit' %>
+    <% if @deal.archived? %>
+      <%= form_tag crm_restore_deal_path(@deal), :method => :put, :class => 'inline-form' do %><%= hidden_field_tag :lock_version, @deal.lock_version %><%= submit_tag l(:button_crm_restore) %><% end %>
+    <% else %>
+      <%= form_tag crm_archive_deal_path(@deal), :method => :put, :class => 'inline-form' do %><%= hidden_field_tag :lock_version, @deal.lock_version %><%= submit_tag l(:button_crm_archive) %><% end %>
+    <% end %>
+  <% end %>
+</div>
+<h2><%= h(@deal.name) %></h2>
+<% if @deal.archived? %><p class="warning"><%= l(:text_crm_record_archived) %></p><% end %>
+
+<div class="crm-record-layout">
+  <section class="box crm-properties">
+    <h3><%= l(:label_crm_properties) %></h3>
+    <dl>
+      <% if @deal.account %><dt><%= l(:field_crm_account) %></dt><dd><%= crm_record_link(@deal.account) %></dd><% end %>
+      <% if @deal.contact %><dt><%= l(:field_crm_contact) %></dt><dd><%= crm_record_link(@deal.contact) %></dd><% end %>
+      <% [[:stage, :field_crm_stage], [:pipeline, :field_crm_pipeline], [:owner, :field_crm_owner], [:expected_close_on, :field_crm_expected_close_on], [:next_action, :field_crm_next_action], [:next_action_on, :field_crm_next_action_on], [:probability, :field_crm_probability]].each do |association, label| %>
+        <% value = @deal.public_send(association) if @deal.respond_to?(association) %>
+        <% value = value.name if value.respond_to?(:name) && !value.is_a?(String) %>
+        <% if value.present? %><dt><%= l(label) %></dt><dd><%= h(value.respond_to?(:strftime) ? format_date(value) : value) %></dd><% end %>
+      <% end %>
+      <% if crm_money? && @deal.amount_cents.present? %><dt><%= l(:field_crm_amount) %></dt><dd><%= crm_money(@deal.amount_cents, @deal.currency) %></dd><% end %>
+      <% if crm_money? && @deal.currency.present? %><dt><%= l(:field_crm_currency) %></dt><dd><%= h(@deal.currency) %></dd><% end %>
+      <% if @deal.description.present? %><dt><%= l(:field_crm_description) %></dt><dd class="wiki"><%= simple_format h(@deal.description) %></dd><% end %>
+      <% render_custom_field_values(@deal) do |field, value| %><dt class="<%= field.css_classes %>"><%= h(field.name) %></dt><dd class="<%= field.css_classes %>"><%= value %></dd><% end %>
+    </dl>
+  </section>
+  <section class="box crm-timeline">
+    <h3><%= l(:label_crm_timeline) %></h3>
+    <% if [:admin, :staff].include?(crm_capability) %>
+      <%= form_for CrmActivity.new, :as => :activity, :url => crm_activities_path, :html => {:class => 'crm-timeline-composer'} do |f| %>
+        <%= hidden_field_tag 'activity[deal_id]', @deal.id %>
+        <p><%= f.select :kind, [['note', 'note'], ['call', 'call'], ['meeting', 'meeting'], ['message', 'message']].map { |value, key| [l("label_crm_activity_#{key}"), key] }, :include_blank => false %></p>
+        <p><%= f.text_area :body, :rows => 4, :cols => 60, :placeholder => l(:text_crm_activity_body_placeholder) %></p>
+        <p><%= f.datetime_local_field :occurred_at, :value => Time.zone.now.strftime('%Y-%m-%dT%H:%M') %></p>
+        <p class="buttons"><%= f.submit l(:button_crm_add_activity) %></p>
+      <% end %>
+    <% end %>
+    <% if @timeline.to_a.any? %>
+      <ol class="crm-timeline-list">
+        <% @timeline.to_a.each do |entry| %>
+          <% item = entry[:item]; kind = entry[:kind].to_s; at = entry[:at] || (item.respond_to?(:created_on) ? item.created_on : nil) %>
+          <li class="crm-timeline-item crm-timeline-<%= kind %>"><time datetime="<%= at&.iso8601 %>"><%= format_time(at) if at %></time>
+            <% if kind == 'activity' %><strong><%= l("label_crm_activity_#{item.kind}") rescue h(item.kind) %></strong><% if item.author_id.present? %><span class="actor"><%= h(crm_owner_name(item.author_id)) %></span><% end %><% if item.subject.present? %><h4><%= h(item.subject) %></h4><% end %><div class="wiki"><%= simple_format h(item.body.to_s) %></div>
+            <% else %><strong><%= l(:label_crm_change) %></strong><span><%= h(item.prop_key.to_s) %></span><% if item.respond_to?(:user_id) && item.user_id.present? %><span class="actor"><%= h(crm_owner_name(item.user_id)) %></span><% end %><% if item.value.present? %><div><%= h(item.value) %></div><% end %><% end %>
+          </li>
+        <% end %>
+      </ol>
+    <% else %><p class="nodata"><%= l(:text_crm_no_timeline_entries) %></p><% end %>
+  </section>
+</div>
+
+<div class="tabs crm-record-tabs">
+  <ul>
+    <li><a href="#crm-account"><%= l(:label_crm_account) %></a></li><li><a href="#crm-contact"><%= l(:label_crm_contact) %></a></li><li><a href="#crm-issues"><%= l(:label_crm_issues) %></a></li><li><a href="#crm-projects"><%= l(:label_crm_projects) %></a></li>
+    <li><a href="#crm-contacts"><%= l(:label_crm_contacts) %></a></li><li><a href="#crm-deals"><%= l(:label_crm_deals) %></a></li>
+    <% if [:admin, :staff, :viewer].include?(crm_capability) %><li><a href="#crm-files"><%= l(:label_crm_files) %></a></li><li><a href="#crm-history"><%= l(:label_crm_history) %></a></li><% end %>
+  </ul>
+  <section id="crm-account" class="crm-tab-panel"><h3><%= l(:label_crm_account) %></h3><%= crm_record_link(@deal.account) if @deal.account %><%= content_tag(:p, l(:text_crm_no_account), :class => 'nodata') unless @deal.account %></section>
+  <section id="crm-contact" class="crm-tab-panel"><h3><%= l(:label_crm_contact) %></h3><%= crm_record_link(@deal.contact) if @deal.contact %><%= content_tag(:p, l(:text_crm_no_contact), :class => 'nodata') unless @deal.contact %></section>
+  <section id="crm-contacts" class="crm-tab-panel"><h3><%= l(:label_crm_contacts) %></h3><% contacts = @deal.account ? @deal.account.contacts.to_a : (@deal.contact ? [@deal.contact] : []) %><% if contacts.any? %><ul><% contacts.each { |contact| %><li><%= crm_record_link(contact) %></li><% } %></ul><% else %><p class="nodata"><%= l(:text_crm_no_contacts) %></p><% end %></section>
+  <section id="crm-deals" class="crm-tab-panel"><h3><%= l(:label_crm_deals) %></h3><% deals = @deal.account ? @deal.account.deals.to_a : [@deal] %><ul><% deals.each { |deal| %><li><%= crm_record_link(deal) %></li><% } %></ul></section>
+  <section id="crm-issues" class="crm-tab-panel"><h3><%= l(:label_crm_issues) %></h3><% links = @deal.links.to_a %><% if links.any? %><ul><% links.each { |link| %><li><%= link_to h(link.issue.subject), issue_path(link.issue) if link.issue %></li><% } %></ul><% else %><p class="nodata"><%= l(:text_crm_no_linked_issues) %></p><% end %></section>
+  <section id="crm-projects" class="crm-tab-panel"><h3><%= l(:label_crm_projects) %></h3><% projects = @deal.account ? @deal.account.projects.to_a : [] %><% if projects.any? %><ul><% projects.each { |project| %><li><%= link_to h(project.name), project_path(project) %></li><% } %></ul><% else %><p class="nodata"><%= l(:text_crm_no_linked_projects) %></p><% end %></section>
+  <% if [:admin, :staff, :viewer].include?(crm_capability) %>
+    <section id="crm-files" class="crm-tab-panel"><h3><%= l(:label_crm_files) %></h3><% if @attachments.to_a.any? %><%= link_to_attachments @deal, :thumbnails => true %><% else %><p class="nodata"><%= l(:text_crm_no_attachments) %></p><% end %><% if [:admin, :staff].include?(crm_capability) %><%= render :partial => 'attachments/form', :locals => {:container => @deal} %><% end %></section>
+    <section id="crm-history" class="crm-tab-panel"><h3><%= l(:label_crm_history) %></h3><% if @history_rows.to_a.any? %><table class="list crm-history"><thead><tr><th><%= l(:field_crm_changed_at) %></th><th><%= l(:field_crm_changed_by) %></th><th><%= l(:field_crm_property) %></th><th><%= l(:field_crm_old_value) %></th><th><%= l(:field_crm_new_value) %></th></tr></thead><tbody><% @history_rows.to_a.each do |row| %><% redacted = row[:redacted] || row['redacted'] %><tr><td><%= format_time(row[:at] || row['at']) %></td><td><%= h(row[:user] || row['user']) %></td><td><%= h(row[:prop_key] || row['prop_key']) %></td><td><%= redacted ? l(:text_crm_redacted_value) : h(row[:old_value] || row['old_value']) %></td><td><%= redacted ? l(:text_crm_redacted_value) : h(row[:value] || row['value']) %></td></tr><% end %></tbody></table><% else %><p class="nodata"><%= l(:text_crm_no_history) %></p><% end %></section>
+  <% end %>
+</div>

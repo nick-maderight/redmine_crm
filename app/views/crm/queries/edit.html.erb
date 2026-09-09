@@ -1,0 +1,12 @@
+<h2><%= l(:label_query) %></h2>
+
+<%= form_tag crm_query_path(@query), :method => :put, :id => 'query-form' do %>
+  <%= hidden_field_tag 'type', @query.class.name %>
+  <p>
+    <label><%= l(:field_visible) %></label>
+    <label class="block"><%= radio_button_tag 'query[visibility]', Query::VISIBILITY_PUBLIC, @query.visibility.to_i == Query::VISIBILITY_PUBLIC %> <%= l(:label_visibility_public) %></label>
+    <label class="block"><%= radio_button_tag 'query[visibility]', Query::VISIBILITY_PRIVATE, @query.visibility.to_i == Query::VISIBILITY_PRIVATE %> <%= l(:label_visibility_private) %></label>
+  </p>
+  <%= render :partial => 'queries/form', :locals => {:query => @query} %>
+  <%= submit_tag l(:button_save) %>
+<% end %>

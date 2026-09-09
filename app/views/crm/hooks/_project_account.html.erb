@@ -1,1 +1,9 @@
-<%# Project overview: the linked CRM account, rendered only when the current user can see it. Filled by the views slice. %>
+<% project = context[:project] %>
+<% account_project = project && CrmAccountProject.includes(:account).find_by(:project_id => project.id) %>
+<% account = account_project && account_project.account %>
+<% if account && account.visible?(User.current) %>
+  <aside class="crm crm-hook crm-project-account" aria-labelledby="crm-project-account-heading">
+    <h3 id="crm-project-account-heading"><%= l(:label_crm_linked_account) %></h3>
+    <p><%= crm_record_link(account) %></p>
+  </aside>
+<% end %>

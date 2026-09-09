@@ -1,0 +1,68 @@
+---
+acme:
+  id: 1
+  name: Acme Corporation
+  domain: acme.example
+  website: https://acme.example
+  phone: '+1 555 0100'
+  address: 1 Acme Way
+  status: active_client
+  owner_id: 3
+  description: Primary fixture account
+  external_ref: test:account:acme
+  lock_version: 0
+  created_on: 2026-01-01 00:00:00 +00:00
+  updated_on: 2026-01-01 00:00:00 +00:00
+  archived_on:
+  merged_into_id:
+
+beta:
+  id: 2
+  name: Beta Industries
+  domain: beta.example
+  website: https://beta.example
+  phone: '+1 555 0101'
+  address: 2 Beta Way
+  status: prospect
+  owner_id: 3
+  description: Secondary fixture account
+  external_ref: test:account:beta
+  lock_version: 0
+  created_on: 2026-01-02 00:00:00 +00:00
+  updated_on: 2026-01-02 00:00:00 +00:00
+  archived_on:
+  merged_into_id:
+
+archived:
+  id: 3
+  name: Archived Account
+  domain: archived.example
+  website:
+  phone:
+  address:
+  status: lead
+  owner_id:
+  description: Archived parent used by activity and restore tests
+  external_ref: test:account:archived
+  lock_version: 0
+  created_on: 2026-01-03 00:00:00 +00:00
+  updated_on: 2026-01-03 00:00:00 +00:00
+  archived_on: 2026-01-04 00:00:00 +00:00
+  merged_into_id:
+
+merged_source:
+  id: 4
+  name: Merged Account
+  domain: merged.example
+  website:
+  phone:
+  address:
+  status: prospect
+  owner_id:
+  description: Merged source account
+  external_ref: test:account:merged
+  lock_version: 0
+  created_on: 2026-01-05 00:00:00 +00:00
+  updated_on: 2026-01-05 00:00:00 +00:00
+  archived_on: 2026-01-06 00:00:00 +00:00
+  merged_into_id: 1

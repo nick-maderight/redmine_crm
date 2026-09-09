@@ -1,0 +1,15 @@
+<div class="box tabular">
+  <p><%= f.text_field :first_name, :size => 40 %></p>
+  <p><%= f.text_field :last_name, :size => 40 %></p>
+  <p><%= f.email_field :email, :size => 60 %></p>
+  <p><%= f.telephone_field :phone, :size => 30 %></p>
+  <p><%= f.text_field :job_title, :size => 50 %></p>
+  <p><%= f.text_field :city, :size => 40 %></p>
+  <p><%= f.url_field :linkedin_url, :size => 60 %></p>
+  <p><%= f.url_field :x_url, :size => 60 %></p>
+  <% if f.object.respond_to?(:account_id) %><p><%= f.collection_select :account_id, CrmAccount.visible(User.current).active.order(:name), :id, :name, :include_blank => l(:label_crm_no_account) %></p><% end %>
+  <% if f.object.respond_to?(:owner_id) %><p><%= f.collection_select :owner_id, User.active.sorted, :id, :name, :include_blank => l(:label_crm_unassigned) %></p><% end %>
+  <% if f.object.respond_to?(:custom_field_values) %>
+    <% f.object.custom_field_values.each do |value| %><p><%= custom_field_tag_with_label :crm_contact, value %></p><% end %>
+  <% end %>
+</div>

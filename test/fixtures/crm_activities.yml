@@ -1,0 +1,63 @@
+---
+acme_message:
+  id: 1
+  kind: message
+  channel: upwork
+  direction: inbound
+  subject: Acme message
+  body: Please send the revised proposal.
+  occurred_at: 2026-01-02 12:00:00 +00:00
+  duration_minutes:
+  account_id: 1
+  contact_id: 1
+  deal_id: 1
+  author_id: 3
+  visibility: shared
+  external_source: upwork
+  external_id: room-1-message-1
+  lock_version: 0
+  created_on: 2026-01-02 12:00:00 +00:00
+  updated_on: 2026-01-02 12:00:00 +00:00
+  archived_on:
+
+beta_note:
+  id: 2
+  kind: note
+  channel:
+  direction:
+  subject: Internal beta note
+  body: Internal pricing discussion.
+  occurred_at: 2026-01-03 12:00:00 +00:00
+  duration_minutes:
+  account_id: 2
+  contact_id: 2
+  deal_id: 2
+  author_id: 3
+  visibility: staff
+  external_source:
+  external_id:
+  lock_version: 0
+  created_on: 2026-01-03 12:00:00 +00:00
+  updated_on: 2026-01-03 12:00:00 +00:00
+  archived_on:
+
+archived_parent_activity:
+  id: 3
+  kind: note
+  channel:
+  direction:
+  subject: Archived account activity
+  body: This is retained for the archived parent test.
+  occurred_at: 2026-01-04 12:00:00 +00:00
+  duration_minutes:
+  account_id: 3
+  contact_id:
+  deal_id:
+  author_id: 3
+  visibility: staff
+  external_source: test
+  external_id: archived-activity-1
+  lock_version: 0
+  created_on: 2026-01-04 12:00:00 +00:00
+  updated_on: 2026-01-04 12:00:00 +00:00
+  archived_on:

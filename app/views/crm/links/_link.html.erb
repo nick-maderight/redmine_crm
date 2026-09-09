@@ -1,0 +1,15 @@
+<%# frozen_string_literal: true %>
+<% crm_link = local_assigns[:crm_link] || local_assigns[:link] %>
+<% target = crm_link && (crm_link.account || crm_link.contact || crm_link.deal) %>
+<% if target && target.visible?(User.current) %>
+  <li id="crm-link-<%= crm_link.id %>">
+    <%= crm_record_link(target) %>
+    <span class="crm-link-issue"><%= link_to l(:label_crm_issue_number, :id => crm_link.issue_id), issue_path(crm_link.issue_id) %></span>
+    <% if Crm::Access.staff?(User.current) %>
+      <%= button_to l(:button_crm_unlink_issue), crm_link_path(crm_link),
+        :method => :delete,
+        :class => "button-link crm-link-remove",
+        :data => { :confirm => l(:text_crm_confirm_unlink_issue) } %>
+    <% end %>
+  </li>
+<% end %>

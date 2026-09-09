@@ -1,0 +1,139 @@
+label_crm_dashboard: CRM dashboard
+label_crm_stale_deals: Stale deals
+label_crm_due_today: Due today
+label_crm_overdue_deals: Overdue deals
+label_crm_my_open_deals: My open deals
+label_crm_recent_activities: Recent activities
+label_crm_pipeline_totals: Pipeline totals
+label_crm_open_total: Open total
+label_crm_weighted_total: Weighted total
+label_crm_new_lead: New lead
+label_crm_activity: Activity
+label_crm_no_matching_deals: No matching deals.
+label_crm_no_open_deals: No open deals.
+label_crm_no_recent_activities: No recent activities.
+label_crm_account: Account
+label_crm_accounts: CRM accounts
+label_crm_contact: Contact
+label_crm_contacts: CRM contacts
+label_crm_deal: Deal
+label_crm_deals: CRM deals
+label_crm_activities: CRM activities
+label_crm_deals_board: Deals board
+label_crm_issues: Issues
+label_crm_projects: Projects
+label_crm_files: Files
+label_crm_history: History
+label_crm_properties: Properties
+label_crm_timeline: Timeline
+label_crm_change: Change
+label_crm_no_account: No account
+label_crm_no_contact: No contact
+label_crm_no_deal: No deal
+label_crm_unassigned: Unassigned
+label_crm_status_lead: Lead
+label_crm_status_prospect: Prospect
+label_crm_status_active_client: Active client
+label_crm_status_past_client: Past client
+label_crm_status_partner: Partner
+label_crm_status_other: Other
+label_crm_activity_note: Note
+label_crm_activity_call: Call
+label_crm_activity_meeting: Meeting
+label_crm_activity_message: Message
+label_crm_activity_other: Other
+label_crm_channel_upwork: Upwork
+label_crm_channel_email: Email
+label_crm_channel_phone: Phone
+label_crm_channel_sms: SMS
+label_crm_channel_in_person: In person
+label_crm_channel_other: Other
+label_crm_direction_inbound: Inbound
+label_crm_direction_outbound: Outbound
+label_crm_visibility_staff: Staff
+label_crm_visibility_shared: Shared
+label_crm_no_deals_in_stage: No deals in this stage.
+label_crm_no_contacts: No contacts.
+label_crm_no_deals: No deals.
+label_crm_no_activities: No activities.
+label_crm_no_linked_issues: No linked issues.
+label_crm_no_linked_projects: No linked projects.
+label_crm_no_attachments: No attachments.
+label_crm_no_history: No history.
+label_crm_no_timeline_entries: No timeline entries.
+text_crm_enable_javascript_for_grid: Enable JavaScript to use the editable grid.
+text_crm_no_accounts: No accounts.
+text_crm_no_contacts: No contacts.
+text_crm_no_deals: No deals.
+text_crm_no_activities: No activities.
+text_crm_no_open_deals: No open deals.
+text_crm_no_recent_activities: No recent activities.
+text_crm_no_matching_deals: No matching deals.
+text_crm_no_timeline_entries: No timeline entries.
+text_crm_no_linked_issues: No linked issues.
+text_crm_no_linked_projects: No linked projects.
+text_crm_no_attachments: No attachments.
+text_crm_no_history: No history.
+text_crm_no_account: This record is not linked to an account.
+text_crm_record_archived: This record is archived.
+text_crm_activity_body_placeholder: Add a note, call summary, meeting note or message.
+button_crm_new_lead: New lead
+button_crm_create_lead: Create lead
+button_crm_new_account: New account
+button_crm_edit_account: Edit account
+button_crm_new_contact: New contact
+button_crm_edit_contact: Edit contact
+button_crm_new_deal: New deal
+button_crm_edit_deal: Edit deal
+button_crm_new_activity: New activity
+button_crm_edit_activity: Edit activity
+button_crm_add_activity: Add activity
+button_crm_archive: Archive
+button_crm_restore: Restore
+button_crm_merge_into: Merge into…
+button_crm_open_board: Open board
+button_crm_list_deals: List deals
+field_crm_name: Name
+field_crm_domain: Domain
+field_crm_website: Website
+field_crm_phone: Phone
+field_crm_address: Address
+field_crm_status: Status
+field_crm_owner: Owner
+field_crm_description: Description
+field_crm_first_name: First name
+field_crm_last_name: Last name
+field_crm_email: Email
+field_crm_job_title: Job title
+field_crm_city: City
+field_crm_linkedin: LinkedIn
+field_crm_x: X
+field_crm_deal_name: Deal name
+field_crm_first_note: First note
+field_crm_stage: Stage
+field_crm_pipeline: Pipeline
+field_crm_amount: Amount
+field_crm_currency: Currency
+field_crm_probability: Probability
+field_crm_expected_close_on: Expected close date
+field_crm_next_action: Next action
+field_crm_next_action_on: Next action date
+field_crm_kind: Kind
+field_crm_subject: Subject
+field_crm_channel: Channel
+field_crm_direction: Direction
+field_crm_occurred_at: Occurred at
+field_crm_duration: Duration (minutes)
+field_crm_visibility: Visibility
+field_crm_author: Author
+field_crm_changed_at: Changed at
+field_crm_changed_by: Changed by
+field_crm_property: Property
+field_crm_old_value: Previous value
+field_crm_new_value: New value
+text_crm_redacted_value: Redacted
+field_crm_account: Account
+field_crm_contact: Contact
+field_crm_deal: Deal
+text_crm_no_contact: This record is not linked to a contact.
+text_crm_no_deals_in_stage: No deals in this stage.

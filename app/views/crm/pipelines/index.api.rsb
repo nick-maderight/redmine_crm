@@ -1,0 +1,27 @@
+api.array :pipelines do
+  @pipelines.each do |pipeline|
+    api.pipeline do
+      api.id pipeline.id
+      api.name pipeline.name
+      api.position pipeline.position if pipeline.position
+      api.is_default pipeline.is_default
+      api.created_on pipeline.created_on if pipeline.respond_to?(:created_on)
+      api.array :stages do
+        pipeline.stages.each do |stage|
+          api.stage do
+            api.id stage.id
+            api.pipeline_id stage.pipeline_id
+            api.name stage.name
+            api.position stage.position
+            api.probability stage.probability
+            api.kind stage.kind
+            api.color stage.color if stage.color.present?
+            api.followup_text stage.followup_text if stage.followup_text.present?
+            api.followup_due_days stage.followup_due_days if stage.followup_due_days.present?
+            api.created_on stage.created_on if stage.respond_to?(:created_on)
+          end
+        end
+      end
+    end
+  end
+end

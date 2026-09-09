@@ -1,0 +1,29 @@
+api.array :deals, api_meta(:total_count => @record_count, :offset => @offset, :limit => @limit) do
+  @records.each do |deal|
+    api.deal do
+      api.id deal.id
+      api.name deal.name
+      api.description deal.description if deal.respond_to?(:description) && deal.description.present?
+      api.account(:id => deal.account_id, :name => deal.account.name) if deal.account_id.present? && deal.account
+      api.contact(:id => deal.contact_id, :name => [deal.contact&.first_name, deal.contact&.last_name].compact.join(' ').strip) if deal.contact_id.present? && deal.contact
+      api.pipeline(:id => deal.pipeline_id, :name => deal.pipeline.name) if deal.pipeline_id.present? && deal.pipeline
+      api.stage(:id => deal.stage_id, :name => deal.stage.name, :kind => deal.stage.kind) if deal.stage_id.present? && deal.stage
+      api.owner crm_owner_name(deal.owner_id) if deal.owner_id.present?
+      if crm_money?
+        api.amount_cents deal.amount_cents if deal.amount_cents
+        api.currency deal.currency if deal.currency.present?
+        api.weighted_cents deal.weighted_cents if deal.respond_to?(:weighted_cents) && deal.weighted_cents
+      end
+      api.probability deal.probability if deal.probability.present?
+      api.expected_close_on deal.expected_close_on if deal.expected_close_on.present?
+      api.closed_on deal.closed_on if deal.closed_on.present?
+      api.next_action deal.next_action if deal.next_action.present?
+      api.next_action_on deal.next_action_on if deal.next_action_on.present?
+      api.external_ref deal.external_ref if deal.external_ref.present?
+      api.archived_on deal.archived_on if deal.respond_to?(:archived?) && deal.archived?
+      api.created_on deal.created_on
+      api.updated_on deal.updated_on
+      render_api_custom_values deal.visible_custom_field_values, api if deal.respond_to?(:visible_custom_field_values)
+    end
+  end
+end

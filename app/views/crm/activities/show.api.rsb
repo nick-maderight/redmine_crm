@@ -1,0 +1,41 @@
+activity = @activity || @record
+api.activity do
+  api.id activity.id
+  api.kind activity.kind
+  api.channel activity.channel if activity.channel.present?
+  api.direction activity.direction if activity.direction.present?
+  api.subject activity.subject if activity.subject.present?
+  api.body activity.body if activity.body.present?
+  api.occurred_at activity.occurred_at if activity.occurred_at.present?
+  api.duration_minutes activity.duration_minutes if activity.duration_minutes.present?
+  api.account(:id => activity.account_id, :name => activity.account.name) if activity.account_id.present? && activity.account
+  api.contact(:id => activity.contact_id, :name => [activity.contact&.first_name, activity.contact&.last_name].compact.join(' ').strip) if activity.contact_id.present? && activity.contact
+  api.deal(:id => activity.deal_id, :name => activity.deal.name) if activity.deal_id.present? && activity.deal && (Crm::Access.staff?(User.current) || Crm::Access.viewer?(User.current))
+  api.author crm_owner_name(activity.author_id) if activity.author_id.present?
+  api.visibility activity.visibility if Crm::Access.staff?(User.current) || Crm::Access.viewer?(User.current)
+  api.external_source activity.external_source if activity.external_source.present?
+  api.external_id activity.external_id if activity.external_id.present?
+  api.archived_on activity.archived_on if activity.respond_to?(:archived?) && activity.archived?
+  api.created_on activity.created_on
+  api.updated_on activity.updated_on
+
+  api.array :changes do
+    crm_history_rows(activity, User.current).each do |row|
+      row = row.stringify_keys if row.respond_to?(:stringify_keys)
+      api.change do
+        api.prop_key row['prop_key'] || row['key'] || row[:prop_key] || row[:key]
+        api.created_on row['at'] || row[:at] || row['created_on'] || row[:created_on]
+        api.user row['user'] || row[:user] if row['user'] || row[:user]
+        unless row['redacted'] || row[:redacted]
+          api.old_value row['old_value'] || row[:old_value] if row.key?('old_value') || row.key?(:old_value)
+          api.value row['value'] || row[:value] if row.key?('value') || row.key?(:value)
+        end
+      end
+    end
+  end if include_in_api_response?('changes')
+  api.array :attachments do
+    activity.attachments.each do |attachment|
+      render_api_attachment(attachment, api)
+    end
+  end if include_in_api_response?('attachments') && activity.respond_to?(:attachments) && activity.attachments_visible?(User.current)
+end

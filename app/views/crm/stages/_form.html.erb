@@ -1,0 +1,41 @@
+<%# frozen_string_literal: true %>
+<tr id="crm-stage-<%= stage.id %>">
+  <td colspan="6">
+    <%= form_tag crm_stage_path(stage), :method => :patch, :class => "crm-inline-form" do %>
+      <%= hidden_field_tag "stage[pipeline_id]", pipeline.id %>
+      <div class="crm-field">
+        <%= label_tag "stage_#{stage.id}_name", l(:field_crm_stage_name) %>
+        <%= text_field_tag "stage[name]", stage.name, :id => "stage_#{stage.id}_name", :required => true, :maxlength => 60 %>
+      </div>
+      <div class="crm-field">
+        <%= label_tag "stage_#{stage.id}_position", l(:field_crm_position) %>
+        <%= number_field_tag "stage[position]", stage.position, :id => "stage_#{stage.id}_position", :min => 0 %>
+      </div>
+      <div class="crm-field">
+        <%= label_tag "stage_#{stage.id}_probability", l(:field_crm_probability) %>
+        <%= number_field_tag "stage[probability]", stage.probability, :id => "stage_#{stage.id}_probability", :min => 0, :max => 100 %>
+      </div>
+      <div class="crm-field">
+        <%= label_tag "stage_#{stage.id}_kind", l(:field_crm_kind) %>
+        <%= select_tag "stage[kind]", options_for_select([[l(:label_crm_open), "open"], [l(:label_crm_won), "won"], [l(:label_crm_lost), "lost"]], stage.kind), :id => "stage_#{stage.id}_kind" %>
+      </div>
+      <div class="crm-field">
+        <%= label_tag "stage_#{stage.id}_color", l(:field_crm_color) %>
+        <%= text_field_tag "stage[color]", stage.color, :id => "stage_#{stage.id}_color", :maxlength => 7 %>
+      </div>
+      <div class="crm-field">
+        <%= label_tag "stage_#{stage.id}_followup_text", l(:field_crm_followup_text) %>
+        <%= text_field_tag "stage[followup_text]", stage.followup_text, :id => "stage_#{stage.id}_followup_text", :maxlength => 255 %>
+      </div>
+      <div class="crm-field">
+        <%= label_tag "stage_#{stage.id}_followup_due_days", l(:field_crm_followup_due_days) %>
+        <%= number_field_tag "stage[followup_due_days]", stage.followup_due_days, :id => "stage_#{stage.id}_followup_due_days", :min => 0 %>
+      </div>
+      <%= submit_tag l(:button_crm_save), :class => "button" %>
+    <% end %>
+    <%= button_to l(:button_crm_delete), crm_stage_path(stage),
+      :method => :delete,
+      :class => "button crm-button-danger",
+      :data => { :confirm => l(:text_crm_confirm_delete_stage) } %>
+  </td>
+</tr>
