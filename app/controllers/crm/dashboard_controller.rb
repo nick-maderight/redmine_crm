@@ -17,7 +17,10 @@ module Crm
       record = create_lead_record(result)
       if create_lead_success?(result, record)
         respond_to do |format|
-          format.html { redirect_to crm_deal_path(record) }
+          format.html do
+            flash[:notice] = l(:notice_successful_create)
+            redirect_back_or_default(crm_deal_path(record))
+          end
           format.json { render :json => {:id => record.id, :deal_id => record.id}, :status => :created }
         end
       else

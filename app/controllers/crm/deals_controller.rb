@@ -99,7 +99,7 @@ module Crm
         values = raw_values.presence || common
         values = values.to_unsafe_h if values.respond_to?(:to_unsafe_h)
         values = values.to_h if values.respond_to?(:to_h) && !values.is_a?(Hash)
-        values = values.stringify_keys
+        values = values.respond_to?(:stringify_keys) ? values.stringify_keys : {}
         record = visible.find_by(:id => id)
         unless record
           results << {:id => id.to_i, :error => 'not_found'}
@@ -108,22 +108,36 @@ module Crm
 
         action = values.delete('action') || params[:bulk_action].to_s
         begin
+          incoming_lock = values['lock_version']
           if %w[archive restore].include?(action) && record.respond_to?(:lock_version) &&
-              (values['lock_version'].blank? || record.lock_version.to_i != values['lock_version'].to_i)
+              ((api_request? && incoming_lock.blank?) ||
+               incoming_lock.present? && record.lock_version.to_i != incoming_lock.to_i)
             results << {:id => record.id, :error => 'conflict'}
             next
           end
+
           if action == 'archive'
             record.archive!(crm_user)
           elsif action == 'restore'
             record.restore!(crm_user)
-          elsif values['stage_id'].present?
+          elsif action == 'move' || action == 'stage' || values.key?('stage_id')
+            unless values['stage_id'].present?
+              record.errors.add(:stage_id, :blank)
+              results << {:id => record.id, :error => 'validation', :messages => record.errors.full_messages}
+              next
+            end
             stage = CrmPipelineStage.find_by(:id => values['stage_id'])
-            raise ActiveRecord::RecordInvalid.new(record) unless stage && stage.pipeline_id.to_i == record.pipeline_id.to_i
-
-            moved = Crm::MoveDeal.call(:deal => record, :stage => stage, :user => crm_user, :lock_version => values['lock_version'])
+            unless stage && stage.pipeline_id.to_i == record.pipeline_id.to_i
+              record.errors.add(:stage_id, :invalid)
+              results << {:id => record.id, :error => 'validation', :messages => record.errors.full_messages}
+              next
+            end
+            lock_version = incoming_lock.presence || record.lock_version unless api_request?
+            lock_version ||= incoming_lock
+            moved = Crm::MoveDeal.call(:deal => record, :stage => stage, :user => crm_user, :lock_version => lock_version)
             record = moved.respond_to?(:deal) ? moved.deal : (moved || record)
           else
+            values['lock_version'] = record.lock_version if values['lock_version'].blank? && !api_request?
             prepared, error = prepared_record_attributes(record, values)
             if error
               results << error.merge(:id => record.id)
@@ -140,7 +154,7 @@ module Crm
         end
       end
 
-      render :json => {:results => results}, :status => :ok
+      render_bulk_results(results, CrmDeal)
     end
 
     def board
@@ -168,8 +182,18 @@ module Crm
     def move
       attributes = record_params(CrmDeal)
       stage = CrmPipelineStage.find_by(:id => attributes['stage_id'] || params[:stage_id])
-      return render_json_error(:error => 'validation', :messages => ['stage is required'], :status => :unprocessable_entity) unless stage
-      return render_json_error(:error => 'validation', :messages => ['stage does not belong to deal pipeline'], :status => :unprocessable_entity) unless stage.pipeline_id.to_i == @record.pipeline_id.to_i
+      unless stage
+        return render_json_error(:error => 'validation', :messages => ['stage is required'], :status => :unprocessable_entity) if mutation_json_request?
+
+        @record.errors.add(:stage_id, :blank)
+        return render_record_errors(@record)
+      end
+      unless stage.pipeline_id.to_i == @record.pipeline_id.to_i
+        return render_json_error(:error => 'validation', :messages => ['stage does not belong to deal pipeline'], :status => :unprocessable_entity) if mutation_json_request?
+
+        @record.errors.add(:stage_id, :invalid)
+        return render_record_errors(@record)
+      end
 
       moved = Crm::MoveDeal.call(:deal => @record, :stage => stage, :user => crm_user, :lock_version => attributes['lock_version'] || params[:lock_version])
       moved = moved.respond_to?(:deal) ? moved.deal : (moved || @record)

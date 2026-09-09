@@ -263,6 +263,13 @@ module Crm
       values = values.to_unsafe_h if values.respond_to?(:to_unsafe_h)
       values = values.to_h if values.respond_to?(:to_h) && !values.is_a?(Hash)
       values = values.stringify_keys
+
+      # The HTML edit forms use a top-level hidden lock_version while the
+      # JSON/API forms put it inside their model wrapper.  Preserve either
+      # shape before the optimistic-lock precheck runs.
+      if !values.key?('lock_version') && params[:lock_version].present?
+        values['lock_version'] = params[:lock_version]
+      end
       values = values.except(*ROUTE_KEYS)
 
       if values.key?('custom_fields') && !values.key?('custom_field_values')
@@ -288,16 +295,46 @@ module Crm
       forbidden = values.keys.reject {|key| allowed.include?(key.to_s)}
       return true if forbidden.empty?
 
+      unless mutation_json_request?
+        forbidden.each {|key| record.errors.add(:base, "Forbidden attribute: #{key}") }
+        return render_record_errors(record)
+      end
       render :json => {:errors => {:forbidden_attributes => forbidden.sort}}, :status => :unprocessable_entity
       false
     end
 
+    def mutation_json_request?
+      return true if api_request?
+      return false unless request.xhr?
+
+      request.accepts.any? {|mime| mime.respond_to?(:json?) && mime.json? }
+    end
+
+    def mutation_record_path(record)
+      return url_for(:action => :index) unless record
+
+      public_send("crm_#{crm_record_key}_path", record)
+    end
+
+    def mutation_error_action
+      case action_name.to_s
+      when 'create' then 'new'
+      when 'move' then 'show'
+      else 'edit'
+      end
+    end
+
     def render_existing(record)
       crm_record_alias(record)
-      if api_request?
-        render :action => 'show', :status => :ok
+      if mutation_json_request?
+        if api_request?
+          render :action => 'show', :status => :ok
+        else
+          render :json => {:id => record.id, :lock_version => record.try(:lock_version), :record => crm_record_payload(record)}, :status => :ok
+        end
       else
-        render :json => {:id => record.id, :lock_version => record.try(:lock_version), :record => crm_record_payload(record)}, :status => :ok
+        flash[:notice] = l(:notice_successful_update)
+        redirect_back_or_default(mutation_record_path(record))
       end
     end
 
@@ -378,30 +415,47 @@ module Crm
       if status.nil? && payload.is_a?(Hash) && payload.key?(:status)
         status = payload.delete(:status)
       end
+      unless mutation_json_request?
+        return render_conflict if payload[:error].to_s == 'conflict'
+
+        if @record
+          messages = Array(payload[:messages]).presence || [payload[:error].to_s.humanize]
+          messages.each {|message| @record.errors.add(:base, message) }
+          return render_record_errors(@record, :status => (status || :unprocessable_entity))
+        end
+      end
       render :json => payload, :status => (status || :unprocessable_entity)
     end
 
     def render_record_errors(record, status: :unprocessable_entity)
-      if api_request?
+      crm_record_alias(record)
+      if mutation_json_request?
         render_validation_errors(record)
       else
-        render_json_error(:error => 'validation', :messages => record.errors.full_messages, :errors => record.errors.to_hash, :status => status)
+        action = mutation_error_action
+        prepare_record_page(record) if action == 'show' && respond_to?(:prepare_record_page)
+        render :action => action, :status => status
       end
     end
 
-    def render_mutation_success(record, status: :ok)
+    def render_mutation_success(record, status: :ok, redirect_path: nil, notice: nil)
       crm_record_alias(record)
-      if api_request?
-        render :action => 'show', :status => status
+      if mutation_json_request?
+        if api_request?
+          render :action => 'show', :status => status
+        else
+          render :json => {:id => record.id, :lock_version => record.try(:lock_version), :record => crm_record_payload(record)}, :status => status
+        end
       else
-        render :json => {:id => record.id, :lock_version => record.try(:lock_version), :record => crm_record_payload(record)}, :status => status
+        flash[:notice] = notice || (status.to_sym == :created ? l(:notice_successful_create) : l(:notice_successful_update))
+        redirect_back_or_default(redirect_path || mutation_record_path(record))
       end
     end
 
     def crm_record_payload(record)
       attributes = record.respond_to?(:attributes) ? record.attributes.deep_dup : {}
       unless crm_money?
-        MONEY_KEYS.each {|key| attributes.delete(key)}
+        MONEY_KEYS.each {|key| attributes.delete(key) }
       end
 
       if attributes.key?('owner_id')
@@ -414,7 +468,12 @@ module Crm
     end
 
     def render_conflict(_exception = nil)
-      render :json => {:error => 'conflict'}, :status => :conflict
+      if mutation_json_request?
+        render :json => {:error => 'conflict'}, :status => :conflict
+      else
+        flash[:error] = l(:notice_locking_conflict)
+        redirect_back_or_default(mutation_record_path(@record))
+      end
     end
 
     def render_not_found(_exception = nil)
@@ -455,14 +514,49 @@ module Crm
       if source.respond_to?(:to_h) && !source.is_a?(Hash) && !source.is_a?(Array)
         source = source.to_h
       end
+      source = source.stringify_keys if source.respond_to?(:stringify_keys)
+      record_items = source.is_a?(Hash) ? source.map {|id, values| [id, values] } : []
 
-      if source.is_a?(Hash)
-        source.map {|id, values| [id, values] }
-      else
-        ids = params[:ids] || source || []
-        ids = ids.to_unsafe_h.keys if ids.respond_to?(:to_unsafe_h)
-        Array(ids).map {|id| [id, {}] }
+      ids = params[:ids]
+      ids = ids.to_unsafe_h.keys if ids.respond_to?(:to_unsafe_h)
+      ids = Array(ids).flat_map {|id| id.to_s.split(',') }.reject(&:blank?).uniq
+      return record_items if ids.empty?
+
+      values_by_id = record_items.to_h {|id, values| [id.to_s, values] }
+      ids.map {|id| [id, values_by_id[id.to_s] || {}] }
+    end
+
+    def render_bulk_results(results, klass = crm_model_class)
+      return render :json => {:results => results}, :status => :ok if mutation_json_request?
+
+      updated = results.count {|result| result[:ok] }
+      conflicts = results.count {|result| result[:error].to_s == 'conflict' }
+      errors = results.count {|result| result[:error] && result[:error].to_s != 'conflict' }
+      messages = []
+      if updated.positive?
+        messages << l(:notice_crm_bulk_updated, :count => updated, :records => bulk_record_label(klass, updated))
       end
+      if conflicts.positive?
+        messages << l(:notice_crm_bulk_conflicts, :count => conflicts, :conflicts => conflicts == 1 ? 'conflict' : 'conflicts')
+      end
+      if errors.positive?
+        messages << l(:notice_crm_bulk_errors, :count => errors, :errors => errors == 1 ? 'error' : 'errors')
+      end
+      message = messages.join(', ')
+      if conflicts.positive? || errors.positive?
+        flash[:error] = message
+      else
+        flash[:notice] = message
+      end
+
+      key = klass.name.demodulize.underscore.sub(/\Acrm_/, '').pluralize
+      redirect_back_or_default(params[:back_url].presence || public_send("crm_#{key}_path"))
+    end
+
+    def bulk_record_label(klass, count)
+      key = klass.name.demodulize.underscore.sub(/\Acrm_/, '')
+      locale_key = count.to_i == 1 ? "label_crm_#{key}" : "label_crm_#{key}_plural"
+      l(locale_key).sub(/\Acrm\s+/i, '').downcase
     end
 
     def bulk_mutate_records(klass = crm_model_class)
@@ -473,7 +567,8 @@ module Crm
       bulk_items.each do |id, raw_values|
         values = raw_values.presence || common
         values = values.to_unsafe_h if values.respond_to?(:to_unsafe_h)
-        values = values.stringify_keys
+        values = values.to_h if values.respond_to?(:to_h) && !values.is_a?(Hash)
+        values = values.respond_to?(:stringify_keys) ? values.stringify_keys : {}
         record = visible.find_by(:id => id)
         unless record
           results << {:id => id.to_i, :error => 'not_found'}
@@ -482,8 +577,10 @@ module Crm
 
         action = values.delete('action') || params[:bulk_action].to_s
         begin
+          incoming_lock = values['lock_version']
           if %w[archive restore].include?(action) && record.respond_to?(:lock_version) &&
-              (values['lock_version'].blank? || record.lock_version.to_i != values['lock_version'].to_i)
+              ((api_request? && incoming_lock.blank?) ||
+               incoming_lock.present? && record.lock_version.to_i != incoming_lock.to_i)
             results << {:id => record.id, :error => 'conflict'}
             next
           end
@@ -492,6 +589,7 @@ module Crm
           elsif action == 'restore'
             record.restore!(User.current)
           else
+            values['lock_version'] = record.lock_version if values['lock_version'].blank? && !api_request?
             prepared, error = prepared_record_attributes(record, values)
             if error
               results << error.merge(:id => record.id)
@@ -508,7 +606,7 @@ module Crm
         end
       end
 
-      render :json => {:results => results}, :status => :ok
+      render_bulk_results(results, klass)
     end
   end
 end

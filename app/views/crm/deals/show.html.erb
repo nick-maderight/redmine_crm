@@ -26,6 +26,7 @@
   <span class="badge badge-status-<%= deal_badge_status %>"><%= h(@deal.stage.name) %></span>
 <% end %>
 <% if @deal.archived? %><span class="badge badge-status-archived"><%= l(:text_crm_record_archived) %></span><% end %>
+<%= error_messages_for @deal if @deal.respond_to?(:errors) && @deal.errors.any? %>
 
 <div class="issue details">
   <div class="attributes">

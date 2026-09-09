@@ -275,6 +275,9 @@ en:
   label_visibility_public: Public
   notice_successful_create: Created successfully.
   notice_successful_update: Updated successfully.
+  notice_crm_bulk_updated: "%{count} %{records} updated"
+  notice_crm_bulk_conflicts: "%{count} %{conflicts}"
+  notice_crm_bulk_errors: "%{count} %{errors}"
 
   activerecord:
     errors:

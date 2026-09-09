@@ -40,7 +40,7 @@ module Crm
       @record.save_attachments(params[:attachments])
       if @record.save
         render_attachment_warning_if_needed(@record)
-        render_mutation_success(@record, :status => :created)
+        render_mutation_success(@record, :status => :created, :redirect_path => activity_parent_path(@record))
       else
         render_record_errors(@record)
       end
@@ -92,6 +92,15 @@ module Crm
 
     def bulk
       bulk_mutate_records(CrmActivity)
+    end
+    private
+
+    def activity_parent_path(activity)
+      return crm_deal_path(activity.deal_id) if activity.deal_id.present?
+      return crm_contact_path(activity.contact_id) if activity.contact_id.present?
+      return crm_account_path(activity.account_id) if activity.account_id.present?
+
+      crm_activity_path(activity)
     end
   end
 end
