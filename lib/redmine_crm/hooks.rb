@@ -10,7 +10,7 @@ module RedmineCrm
     def view_layouts_base_html_head(context = {})
       controller = context[:controller]
       return '' unless controller && controller.class.name.start_with?('Crm::')
-      stylesheet_link_tag('crm', :plugin => 'redmine_crm')
+      stylesheet_link_tag('tabulator_simple', 'crm', :plugin => 'redmine_crm')
     end
   end
 end
