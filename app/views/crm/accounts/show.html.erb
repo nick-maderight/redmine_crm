@@ -82,7 +82,7 @@
               <td><%= crm_record_link(deal) %></td>
               <td><span class="badge badge-status-<%= deal.stage_kind.to_s.dasherize %>"><%= h(deal.stage && deal.stage.name) %></span></td>
               <% if crm_money? %><td><%= crm_money(deal.amount_cents, deal.currency) if deal.amount_cents.present? %></td><% end %>
-              <td><%= h(deal.next_action) %></td>
+              <td><%= h(crm_humanize_enum(deal.next_action)) %></td>
               <td><%= format_date(deal.next_action_on) if deal.next_action_on %></td>
             </tr>
           <% end %>

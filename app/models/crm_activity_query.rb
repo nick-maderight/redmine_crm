@@ -68,7 +68,7 @@ class CrmActivityQuery < Query
     crm_list_filter('account_id', lambda { crm_values(CrmAccount) }, :name => crm_label('account'))
     add_available_filter('account.name', :type => :string, :name => crm_label('account'))
     crm_list_filter('contact_id', lambda { crm_values(CrmContact) }, :name => crm_label('contact'))
-    crm_list_filter('deal_id', lambda { crm_values(CrmDeal) }, :name => crm_label('deal'))
+    crm_list_filter('deal_id', lambda { crm_values(CrmDeal) }, :name => crm_label('deal')) unless contractor_viewer?
     crm_list_filter('author_id', lambda { crm_owner_values }, :name => crm_label('author'))
     add_available_filter('subject', :type => :text, :name => crm_label('subject'))
     add_available_filter('body', :type => :text, :name => crm_label('body'))
@@ -83,12 +83,23 @@ class CrmActivityQuery < Query
                          :values => [[l(:general_text_yes), '1'], [l(:general_text_no), '0']])
   end
 
+  # Contractors never see deals: the column and filter are absent for them (not merely blank).
   def available_columns
-    @available_columns ||= self.class.available_columns.dup
+    @available_columns ||= begin
+      columns = self.class.available_columns.dup
+      columns.reject! {|column| column.name == :deal } if contractor_viewer?
+      columns
+    end
   end
 
   def default_columns_names
-    [:kind, :subject, :occurred_at, :account, :contact, :deal, :author]
+    names = [:kind, :subject, :occurred_at, :account, :contact, :deal, :author]
+    names.delete(:deal) if contractor_viewer?
+    names
+  end
+
+  def contractor_viewer?
+    Crm::Access.contractor?(User.current)
   end
 
   def default_sort_criteria

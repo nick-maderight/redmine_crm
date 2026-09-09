@@ -59,3 +59,27 @@ class CrmDealsControllerTest < Redmine::ControllerTest
     assert_equal 403, response.status
   end
 end
+
+class CrmActivitiesControllerContractorTest < Redmine::ControllerTest
+  tests Crm::ActivitiesController
+
+  fixtures :users, :groups_users, :roles, :members, :member_roles, :projects, :enabled_modules,
+           :crm_pipelines, :crm_pipeline_stages, :crm_accounts, :crm_contacts,
+           :crm_deals, :crm_activities, :crm_account_projects
+
+  def test_contractor_activities_list_never_shows_deals
+    contractor = crm_contractor_user
+    @request.session[:user_id] = contractor.id
+
+    get :index
+
+    assert_response :success
+    assert_select 'a', :text => /Acme message/
+    assert_no_match(/Acme renewal/, response.body)
+    assert_select 'th', :text => /Deal/, :count => 0
+
+    get :show, :params => {:id => 1}
+    assert_response :success
+    assert_no_match(/Acme renewal/, response.body)
+  end
+end

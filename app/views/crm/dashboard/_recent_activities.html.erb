@@ -24,7 +24,7 @@
           </div>
           <p class="crm-journal-context">
             <%= link_to h(activity.subject), crm_activity_path(activity) if activity.subject.present? %>
-            <% context_record = activity.deal || activity.contact || activity.account %>
+            <% context_record = (crm_capability == :contractor ? nil : activity.deal) || activity.contact || activity.account %>
             <% if context_record %>
               <span class="sep">·</span> <%= crm_record_link(context_record) %>
             <% end %>
