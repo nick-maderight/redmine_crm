@@ -116,10 +116,12 @@ module Crm
 
     private
 
+    # Accepts the model-name wrapper (crm_contact / crm_deal), the short wrapper
+    # (contact / deal) or a flat top-level payload.
     def feed_params(key)
-      raw = params[key] || params[key.to_s] || params
+      raw = params["crm_#{key}"] || params[key] || params[key.to_s] || params
       raw = raw.to_unsafe_h if raw.respond_to?(:to_unsafe_h)
-      raw.to_h.stringify_keys.except('controller', 'action', 'format')
+      raw.to_h.stringify_keys.except('controller', 'action', 'format', 'crm_contact', 'crm_deal', 'crm_activity', 'contact', 'deal', 'activity')
     end
 
     def crm_feed_action_allowed?

@@ -84,15 +84,47 @@ module Crm
     end
 
     def prepare_dashboard
+      if Crm::Access.contractor?(User.current)
+        @accounts = visible_accounts.to_a
+        @contacts = visible_contacts.to_a
+        @recent_activities = recent_activities
+        @stale = @due = @overdue = @my_open_deals = []
+        @totals = {}
+        @lead ||= {}
+        return
+      end
+
       deals = visible_deals
       today = Date.current
       @stale = deals.select { |deal| stale_deal?(deal) }
       @due = deals.select { |deal| deal.next_action_on == today }
       @overdue = deals.select { |deal| deal.next_action_on.present? && deal.next_action_on < today }
       @my_open_deals = deals.select { |deal| deal.owner_id == User.current.id }
-      @recent_activities = visible_activities.order(Arel.sql('COALESCE(occurred_at, created_on) DESC'), :id => :desc).limit(10).to_a
+      @recent_activities = recent_activities
       @totals = crm_money? ? dashboard_totals(deals) : {}
       @lead ||= {}
+    end
+
+    def visible_accounts
+      return CrmAccount.none unless defined?(CrmAccount)
+
+      CrmAccount.visible(User.current).order("#{CrmAccount.table_name}.name ASC, #{CrmAccount.table_name}.id ASC")
+    end
+
+    def visible_contacts
+      return CrmContact.none unless defined?(CrmContact)
+
+      CrmContact.visible(User.current).order("#{CrmContact.table_name}.first_name ASC, #{CrmContact.table_name}.last_name ASC, #{CrmContact.table_name}.id ASC")
+    end
+
+    def recent_activities
+      return [] unless defined?(CrmActivity)
+
+      table = CrmActivity.table_name
+      visible_activities.
+        order(Arel.sql("COALESCE(#{table}.occurred_at, #{table}.created_on) DESC, #{table}.id DESC")).
+        limit(10).
+        to_a
     end
 
 
@@ -116,7 +148,7 @@ module Crm
       return false unless deal.respond_to?(:stage) && deal.stage && deal.stage.kind.to_s == 'open'
 
       recent_cutoff = 14.days.ago
-      recent = deal.activities.where('COALESCE(occurred_at, created_on) >= ?', recent_cutoff).exists?
+      recent = deal.activities.where("COALESCE(#{CrmActivity.table_name}.occurred_at, #{CrmActivity.table_name}.created_on) >= ?", recent_cutoff).exists?
       future_action = deal.next_action_on.present? && deal.next_action_on > Date.current
       !recent && !future_action
     end

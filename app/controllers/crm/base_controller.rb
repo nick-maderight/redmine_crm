@@ -87,8 +87,11 @@ module Crm
         render_403
         false
       when :contractor
-        if api_request? || (controller_name == 'deals' && action_name == 'board')
+        if api_request?
           render_403
+          false
+        elsif controller_name == 'deals' && %w[index show board move].include?(action_name.to_s)
+          render_404
           false
         else
           true

@@ -323,7 +323,7 @@ module RedmineCrm
         ref = nil if source_id.empty?
         attrs = account_attributes(row)
         existing = find_record(klass, ref)
-        existing ||= klass.where(:name => attrs[:name]).first if ref.to_s == '' && attrs[:name].to_s != ''
+        existing ||= klass.where('LOWER(name) = ?', attrs[:name].downcase).first if attrs[:name].to_s != ''
         if @mode == :diff
           if existing
             @receipt['matched']['accounts'] += 1
@@ -390,6 +390,7 @@ module RedmineCrm
         end
         if existing
           @receipt['matched']['contacts'] += 1
+          update_existing_contact(existing, attrs) unless @mode == :diff
           @source_id_to_record[:people][source_id] = existing
           next
         end
@@ -440,6 +441,7 @@ module RedmineCrm
         end
         if existing
           @receipt['matched']['deals'] += 1
+          update_existing_deal(existing, attrs) unless @mode == :diff
           @source_id_to_record[:opportunities][source_id] = existing
           next
         end
@@ -494,6 +496,7 @@ module RedmineCrm
         end
         if existing
           @receipt['matched']['activities'] += 1
+          update_existing_activity(existing, attrs) unless @mode == :diff
           next
         end
 
@@ -514,30 +517,36 @@ module RedmineCrm
 
     def import_project_links_body
       candidates = named_active_projects
+      @receipt['project_links']['unmatched_source'] = candidates.filter_map do |row|
+        candidate_project_name(row) unless project_target_from_source(row)
+      end.uniq
+
       candidates.each do |row|
         target = project_target_from_source(row)
         next unless target
         identifier = project_identifier_for_target(target)
-        next unless identifier
-        create_project_link(identifier, target) unless @mode == :diff
+        create_project_link(identifier, target) if identifier
       end
-      unmatched = candidates.filter_map do |row|
-        candidate_project_name(row) unless project_target_from_source(row)
-      end
-      @receipt['project_links']['unmatched_source'] = unmatched.uniq
 
       # The Client field is the source for exactly these three links.  Heesu is
       # already represented by the source project row and is not duplicated.
       CLIENT_ACCOUNTS.values.each do |account_name|
         identifier = project_identifier_for_target(account_name)
-        create_project_link(identifier, account_name) if identifier && @mode != :diff
+        create_project_link(identifier, account_name) if identifier
       end
     end
 
     def create_project_link(identifier, account_name)
       project = Project.where(:identifier => identifier).first
+      unless project
+        @receipt['project_links']['unmatched_source'] << "#{identifier}: project not found"
+        return
+      end
       account = account_by_name(account_name)
-      return unless project && account
+      unless account
+        @receipt['project_links']['unmatched_source'] << "#{identifier}: account not found"
+        return
+      end
 
       klass = crm_class('CrmAccountProject')
       existing = klass.where(:project_id => project.id).first
@@ -549,6 +558,8 @@ module RedmineCrm
         end
         return
       end
+      return if @mode == :diff
+
       klass.create!(:account_id => account.id, :project_id => project.id)
       @receipt['project_links']['created'] += 1
     rescue StandardError => e
@@ -763,12 +774,71 @@ module RedmineCrm
       return unless record.respond_to?(:custom_field_values=)
       field = CustomField.where(:type => "#{record.class.name}CustomField", :name => name).first
       return unless field
+      normalized = normalize_custom_value(field, value)
+      if normalized.nil?
+        @receipt['custom_values_skipped'] ||= []
+        @receipt['custom_values_skipped'] << {
+          'record_type' => record.class.name,
+          'field' => name,
+          'source_value' => value
+        }
+        return
+      end
       current = record.respond_to?(:custom_field_values) ? record.custom_field_values : []
       values = current.each_with_object({}) { |item, hash| hash[item.custom_field_id.to_s] = item.value }
-      values[field.id.to_s] = value
+      values[field.id.to_s] = normalized
       record.custom_field_values = values
     rescue StandardError => e
       record_error('custom_field', "#{record.class.name}:#{name}", e)
+    end
+
+    def normalize_custom_value(field, value)
+      case field.field_format.to_s
+      when 'list'
+        Array(field.possible_values).find { |allowed| normalize_key(allowed) == normalize_key(value) }
+      when 'date'
+        parse_date(value)
+      when 'int'
+        Integer(value.to_s, 10)
+      when 'bool'
+        truthy?(value)
+      else
+        value
+      end
+    rescue ArgumentError, TypeError
+      nil
+    end
+
+    def update_existing_activity(record, attrs)
+      changed = false
+      %i[contact_id deal_id account_id].each do |field|
+        value = attrs[field]
+        next if value.blank? || record.public_send(field).present?
+
+        assign(record, field, value)
+        changed = true
+      end
+      record.save! if changed
+    end
+
+    def update_existing_contact(record, attrs)
+      account_id = attrs[:account_id]
+      return if account_id.blank? || record.account_id.present?
+
+      record.account_id = account_id
+      record.save!
+    end
+
+    def update_existing_deal(record, attrs)
+      changed = false
+      %i[contact_id account_id].each do |field|
+        value = attrs[field]
+        next if value.blank? || record.public_send(field).present?
+
+        assign(record, field, value)
+        changed = true
+      end
+      record.save! if changed
     end
 
     def resolve_user_id(value)
@@ -875,6 +945,17 @@ module RedmineCrm
         'deals' => safe_count('CrmDeal'),
         'activities' => safe_count('CrmActivity'),
         'amount_cents' => safe_sum('CrmDeal', :amount_cents)
+      }
+      source_stages = live_rows(:opportunities).each_with_object(Hash.new(0)) do |row, counts|
+        counts[stage_name_for(row)] += 1
+      end
+      @receipt['source_acceptance'] = {
+        'accounts' => @cohort_companies.length + CLIENT_ACCOUNTS.length,
+        'contacts' => @cohort_people.length,
+        'deals' => live_rows(:opportunities).length,
+        'activities' => live_rows(:communications).length,
+        'amount_cents' => live_rows(:opportunities).sum { |row| amount_cents(row_value(row, 'amountAmountMicros', 'amountMicros', 'amount_amount_micros')) || 0 },
+        'stage_distribution' => source_stages
       }
       @receipt['diff_changes_count'] = @receipt['diff_changes'].length
       @receipt['acceptance_baseline'] = {'accounts' => 12, 'contacts' => 32, 'deals' => 31, 'activities' => 634}
